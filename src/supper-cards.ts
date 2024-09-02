@@ -1,4 +1,4 @@
-import { SimpleEntityBasedElement } from "./base-elements.js";
+import { SimpleEntityBasedElement } from "./base-elements.ts";
 import { html, css, unsafeCSS } from "lit";
 
 function isDateToday(dateStr) {

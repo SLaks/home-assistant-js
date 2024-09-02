@@ -1,4 +1,4 @@
-import { SimpleEntityBasedElement } from "./base-elements.js";
+import { SimpleEntityBasedElement } from "./base-elements.ts";
 import { LitElement, html, css } from "lit";
 
 /** Renders a list of entity IDs as popup cards */
