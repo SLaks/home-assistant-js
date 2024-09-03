@@ -1,22 +1,43 @@
-import { LitElement } from "lit";
+import { HomeAssistant } from "custom-card-helpers/dist/types";
+import { LitElement, PropertyValues } from "lit";
+import { property } from "lit/decorators/property.js";
+
+export function bindEntity({ entityId, attributeName }: { entityId: string, attributeName?: string }) {
+  return function <T extends SimpleEntityBasedElement>(target: T, propertyName: keyof T) {
+    (target.entityBindings ??= []).push({
+      propertyName,
+      entityId,
+      attributeName,
+    });
+  };
+}
+
+interface EntityBinding<T extends SimpleEntityBasedElement> {
+  propertyName: keyof T;
+  entityId: string;
+  attributeName?: string;
+}
 
 export class SimpleEntityBasedElement extends LitElement {
-  shouldUpdate(changedProps) {
+  entityBindings?: EntityBinding<this>[];
+
+  @property({ attribute: false }) hass?: HomeAssistant;
+
+  shouldUpdate(changedProps: PropertyValues<this>) {
     const oldHass = changedProps.get("hass");
     if (!oldHass) return true;
-    return Object.values(this.constructor.properties).some(
-      (p) => p.entity && oldHass.states[p.entity] !== this.hass.states[p.entity]
-    );
+    return this.entityBindings?.some(
+      (p) => oldHass.states[p.entityId] !== this.hass?.states[p.entityId]
+    ) ?? false;
   }
 
-  update(changedProps) {
-    for (const [property, info] of Object.entries(
-      this.constructor.properties
-    )) {
-      if (!info.entity) continue;
-      const state = this.hass.states[info.entity];
-      this[property] = info.hassAttribute
-        ? state.attributes[info.hassAttribute]
+  update(changedProps: PropertyValues<this>) {
+    if (!this.hass || !this.entityBindings) return super.update(changedProps);
+    for (const info of this.entityBindings) {
+      if (!info.entityId) continue;
+      const state = this.hass.states[info.entityId];
+      this[info.propertyName] = info.attributeName
+        ? state.attributes[info.attributeName]
         : state.state;
     }
     return super.update(changedProps);

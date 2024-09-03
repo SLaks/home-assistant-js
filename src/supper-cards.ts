@@ -1,7 +1,10 @@
-import { SimpleEntityBasedElement } from "./base-elements.ts";
-import { html, css, unsafeCSS } from "lit";
+/* eslint-disable lit/no-template-arrow */
+import { HomeAssistant, LovelaceCard } from "custom-card-helpers";
+import { property, state } from "lit/decorators.js";
+import { bindEntity, SimpleEntityBasedElement } from "./base-elements.ts";
+import { html, css, unsafeCSS, PropertyValues } from "lit";
 
-function isDateToday(dateStr) {
+function isDateToday(dateStr: string) {
   const today = new Date();
   return new Date(today.getTime() - today.getTimezoneOffset() * 60_000)
     .toISOString()
@@ -12,32 +15,77 @@ const desktopMode = unsafeCSS`(min-width: 1165px)`;
 const mobileMode = unsafeCSS`(max-width: 1164px)`;
 const veryMobileMode = unsafeCSS`(max-width: 429px)`;
 
-export class SupperSelectorElement extends SimpleEntityBasedElement {
-  static properties = {
-    hass: { attribute: false },
-    supperTimeEl: { state: true },
-    isTodaySelected: { state: true },
-    selectedDate: { state: true },
-    selectedSupper: { state: true },
-    isNineDays: { state: true },
-    /** Milliseconds from now until supper should start. */
-    actionTimeRemaining: { state: true },
-    suppers: {
-      state: true,
-      entity: "sensor.supper_list",
-      hassAttribute: "all",
-    },
-    allDates: {
-      state: true,
-      entity: "sensor.supper_today",
-      hassAttribute: "all",
-    },
-    targetTime: { state: true, entity: "input_datetime.supper_target_time" },
-    sourdoughState: { state: true, entity: "input_select.sourdough_state" },
-    nineDaysStart: { state: true, entity: "sensor.9_days_start" },
-  };
+type Gender = 'milchig' | 'pareve' | 'fleishig';
+interface SupperInfo {
+  name: string;
+  gender: Gender;
+  image: string;
+  actions: SupperActionInfo[];
+}
 
-  update(changedProps) {
+interface SupperForDate extends SupperInfo {
+  date: string;
+}
+
+interface DurationInfo {
+  str: string;
+  millis: number;
+}
+
+interface SupperActionInfo {
+  name: string;
+  icon: string;
+  time: DurationInfo;
+  total_time: DurationInfo;
+}
+
+export class SupperSelectorElement extends SimpleEntityBasedElement {
+  @property({ attribute: false })
+  hass?: HomeAssistant;
+
+  @state()
+  supperTimeEl?: LovelaceCard;
+  @state()
+  isTodaySelected = false;
+  @state()
+  selectedDate?: string;
+  @state()
+  selectedSupper?: string;
+  @state()
+  isNineDays = false;
+
+  /** Milliseconds from now until supper should start. */
+  @state()
+  actionTimeRemaining = 0;
+
+  @state()
+  @bindEntity({
+    entityId: "sensor.supper_list",
+    attributeName: "all",
+  })
+  suppers: SupperInfo[] = [];
+
+  @bindEntity({
+    entityId: "sensor.supper_today",
+    attributeName: "all",
+  })
+  @state()
+  allDates: SupperForDate[] = [];
+
+  @state()
+  @bindEntity({ entityId: "input_datetime.supper_target_time" })
+  targetTime = "";
+
+  @state()
+  @bindEntity({ entityId: "input_select.sourdough_state" })
+  sourdoughState = "";
+
+  @state()
+  @bindEntity({ entityId: "sensor.9_days_start" })
+  nineDaysStart = "";
+
+
+  update(changedProps: PropertyValues<this>) {
     super.update(changedProps);
     if (this.supperTimeEl) this.supperTimeEl.hass = this.hass;
 
@@ -47,18 +95,18 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     this.selectedSupper = this.allDates.find(
       (s) => s.date === this.selectedDate
     )?.name;
-    this.isTodaySelected = isDateToday(this.selectedDate);
+    this.isTodaySelected = !!this.selectedDate && isDateToday(this.selectedDate);
     /** Milliseconds from now until supper should start. */
     this.actionTimeRemaining =
-      new Date(`${this.selectedDate}T${this.targetTime}`) - new Date();
+      +new Date(`${this.selectedDate}T${this.targetTime}`) - +new Date();
 
     const nineDaysOffset =
-      (new Date(this.selectedDate) - new Date(this.nineDaysStart)) /
+      (+new Date(this.selectedDate || new Date()) - +new Date(this.nineDaysStart)) /
       (24 * 60 * 60 * 1000);
     this.isNineDays = nineDaysOffset >= 0 && nineDaysOffset < 9;
   }
 
-  isSupperDisabled(supper) {
+  isSupperDisabled(supper: SupperInfo) {
     if (this.isNineDays && supper.gender === "fleishig") return true;
     // Suppers should only be disabled when selecting for today.
     if (!this.isTodaySelected) return false;
@@ -80,7 +128,7 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     return false;
   }
 
-  async setConfig(config) {
+  async setConfig() {
     const helpers = await window.loadCardHelpers();
     this.supperTimeEl = helpers.createCardElement({
       type: "entities",
@@ -94,8 +142,8 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     this.supperTimeEl.hass = this.hass;
   }
 
-  setSupper(supper) {
-    this.hass.callService("script", "set_supper", {
+  setSupper(supper: string) {
+    this.hass!.callService("script", "set_supper", {
       supper,
       date: this.selectedDate,
     });
@@ -413,7 +461,7 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
             class="BackLink"
             href="./0"
             title="Back"
-            @click="${() => history.back()}"
+            @click=${() => history.back()}
           >
             <ha-icon icon="mdi:arrow-left-circle"></ha-icon>
             <md-ripple></md-ripple>
@@ -427,7 +475,7 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     `;
   }
 
-  renderDateTab(dateInfo) {
+  renderDateTab(dateInfo: SupperForDate) {
     const isToday = isDateToday(dateInfo.date);
     const isSelected = this.selectedDate === dateInfo.date;
     return html`<div
@@ -437,12 +485,12 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
         : ""} ${dateInfo.name ? "HasSupper" : "NoSupper"}"
       style="--supper-image: url(/local/suppers/${dateInfo.image});
              --gender-color: var(--${dateInfo.gender}-color);"
-      @click="${() => (this.selectedDate = dateInfo.date)}"
+      @click=${() => (this.selectedDate = dateInfo.date)}
     >
       <div class="Icon">
         ${dateInfo.name
-          ? html`<img src="/local/suppers/${dateInfo.image}" />`
-          : html`<ha-icon icon="mdi:help-circle-outline" />`}
+        ? html`<img src="/local/suppers/${dateInfo.image}" />`
+        : html`<ha-icon icon="mdi:help-circle-outline"></ha-icon>`}
       </div>
       <div class="Label">
         <b>
@@ -453,7 +501,7 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
       <md-ripple></md-ripple>
     </div>`;
   }
-  renderSupperButton(supper) {
+  renderSupperButton(supper: SupperInfo) {
     const isSelected = supper.name === this.selectedSupper;
     return html`<div
       tabindex="0"
@@ -472,9 +520,9 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     </div>`;
   }
 
-  renderSupperAction(a) {
+  renderSupperAction(a: SupperActionInfo) {
     return html`<div class="Action">
-      <ha-icon icon="${a.icon}"></ha-icon> ${a.time.str}
+      <ha-icon icon=${a.icon}></ha-icon> ${a.time.str}
     </div>`;
   }
 }

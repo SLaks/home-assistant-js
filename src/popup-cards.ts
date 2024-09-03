@@ -1,5 +1,8 @@
-import { SimpleEntityBasedElement } from "./base-elements.ts";
-import { LitElement, html, css } from "lit";
+import { HomeAssistant, LovelaceCard, LovelaceConfig } from "custom-card-helpers/dist/types";
+import { bindEntity, SimpleEntityBasedElement } from "./base-elements.ts";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { property, state } from "lit/decorators.js";
+import { CardHelpers } from "./types.ts";
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardRendererElement extends LitElement {
@@ -11,22 +14,29 @@ class PopupCardRendererElement extends LitElement {
     cardsToRender: { state: true },
   };
 
-  cardMap = new Map();
+  @property({ attribute: false })
+  hass?: HomeAssistant;
+
+  @property({ attribute: "card-entities", type: Array })
+  cardEntities: string[] = [];
+
+  @state()
+  missingCards: string[] = [];
+  @state()
+  cardsToRender: string[] = [];
+  @state()
+  helpers?: CardHelpers;
+
+  private readonly cardMap = new Map<string, LovelaceCard>();
   constructor() {
-      super();
-      window.loadCardHelpers().then((h) => (this.helpers = h));
-      this.missingCards = [];
+    super();
+    window.loadCardHelpers().then((h) => (this.helpers = h));
   }
 
-  update(changedProps) {
-    if (changedProps.has("cardEntities")) this.createCards(this.cardEntities);
+  update(changedProps: PropertyValues<this>) {
+    if (changedProps.has("cardEntities") || changedProps.has("helpers")) this.createCards();
     this.cardMap.forEach((card) => (card.hass = this.hass));
-    // if (changedProps.length === 1 && changedProps.has("hass")) return;
     super.update(changedProps);
-  }
-  updated(changedProperties) {
-    super.updated(changedProperties);
-    this.cardMap.forEach((c) => (c.hass = this.hass));
   }
 
   static styles = css`
@@ -76,14 +86,15 @@ class PopupCardRendererElement extends LitElement {
   `;
   render() {
     if (!this.cardsToRender) return html`Loading...`;
-    return html`
-      <div class="Root">
-        ${[...this.cardMap].map(([id, card]) => {
-          const isHidden = !this.cardsToRender.includes(id);
-          return html`<div class="CardWrapper ${isHidden ? "Hidden" : ""}">
+    const renderedCards = [...this.cardMap].map(([id, card]) => {
+      const isHidden = !this.cardsToRender.includes(id);
+      return html`<div class="CardWrapper ${isHidden ? "Hidden" : ""}">
             ${card} ${isHidden ? html`<span></span>` : null}
           </div>`;
-        })}
+    });
+    return html`
+      <div class="Root">
+        ${renderedCards}
         ${this.renderErrorCard()}
       </div>
     `;
@@ -104,33 +115,33 @@ class PopupCardRendererElement extends LitElement {
     </ha-card>`;
   }
 
-  async createCards(cardEntities) {
-    if (!this.hass) return;
-    const newCardIds = cardEntities.filter(
+  async createCards() {
+    if (!this.hass || !this.helpers) return;
+    const newCardIds = this.cardEntities.filter(
       (id) => !this.cardMap.has(id) && !this.missingCards.includes(id)
     );
 
-    const popupCardsDashboard = await this.hass.callWS({
+    const popupCardsDashboard = await this.hass.callWS<LovelaceConfig>({
       type: "lovelace/config",
       url_path: "popup-cards",
     });
-    const allCards = popupCardsDashboard.views.flatMap((v) => v.cards);
+    const allCards = popupCardsDashboard.views.flatMap((v) => v.cards ?? []);
     const newCards = allCards.filter(({ entity }) =>
       newCardIds.includes(entity)
     );
 
     newCards.forEach((c) => {
-      c.styles?.card?.forEach((s) => {
+      c.styles?.card?.forEach((s: Record<string, string>) => {
         if (!s.width) return;
         s["max-width"] = s.width;
         delete s.width;
       });
-      this.cardMap.set(c.entity, this.helpers.createCardElement(c));
+      this.cardMap.set(c.entity, this.helpers!.createCardElement(c));
     });
-    this.missingCards = cardEntities.filter(
+    this.missingCards = this.cardEntities.filter(
       (entity) => !allCards.some((c) => c.entity === entity)
     );
-    this.cardsToRender = cardEntities.filter((entity) =>
+    this.cardsToRender = this.cardEntities.filter((entity) =>
       allCards.some((c) => c.entity === entity)
     );
     this.requestUpdate();
@@ -143,10 +154,18 @@ class AutoPopupCardsElement extends SimpleEntityBasedElement {
     hass: { attribute: false },
     cardEntities: { state: true, entity: "sensor.dashboard_alerts" },
   };
-  setConfig() {}
+
+
+  @property({ attribute: false })
+  @bindEntity({ entityId: "sensor.dashboard_alerts" })
+  cardEntities = '[]';
+
+
+  setConfig() { }
   render() {
+    if (!this.hass) return html`<div>Loading...</div>`
     return html`<popup-card-renderer
-      hass=${this.hass}
+      .hass=${this.hass}
       cardEntities=${JSON.parse(this.cardEntities)}
     ></popup-card-renderer>`;
   }
@@ -163,20 +182,21 @@ class AutoPopupCardsElement extends SimpleEntityBasedElement {
 
 customElements.define("auto-popup-cards", AutoPopupCardsElement);
 
-class ManualPopupCardsElement extends SimpleEntityBasedElement {
-  static properties = {
-    hass: { attribute: false },
-    config: { attribute: false },
-    cardEntities: { state: true },
-  };
-  async setConfig(config) {
+class ManualPopupCardsElement extends LitElement {
+  @property({ attribute: false })
+  hass?: HomeAssistant;
+
+  @state()
+  cardEntities: string[] = [];
+
+  async setConfig(config: { entities: string[] }) {
     if (!config.entities) throw new Error("Please specify entities");
     this.cardEntities = config.entities;
   }
   render() {
     return html`<popup-card-renderer
-      hass=${this.hass}
-      cardEntities=${this.cardEntities}
+      .hass=${this.hass}
+      .cardEntities=${this.cardEntities}
     ></popup-card-renderer>`;
   }
 }
@@ -185,7 +205,7 @@ customElements.define("manual-popup-cards", ManualPopupCardsElement);
 
 window.showPopupCards = function () {
   if (window.showingPopupCards) return;
-  browser_mod.service("popup", {
+  window.browser_mod.service("popup", {
     content: { type: "custom:auto-popup-cards" },
     style: `
           --popup-min-width: 30px;
@@ -193,3 +213,13 @@ window.showPopupCards = function () {
         `,
   });
 };
+
+declare global {
+  interface Window {
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    browser_mod: any;
+    showingPopupCards: boolean;
+    showPopupCards: () => void;
+  }
+}
