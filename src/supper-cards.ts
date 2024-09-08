@@ -15,7 +15,7 @@ const desktopMode = unsafeCSS`(min-width: 1165px)`;
 const mobileMode = unsafeCSS`(max-width: 1164px)`;
 const veryMobileMode = unsafeCSS`(max-width: 429px)`;
 
-type Gender = 'milchig' | 'pareve' | 'fleishig';
+type Gender = "milchig" | "pareve" | "fleishig";
 interface SupperInfo {
   name: string;
   gender: Gender;
@@ -84,7 +84,6 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
   @bindEntity({ entityId: "sensor.9_days_start" })
   nineDaysStart = "";
 
-
   update(changedProps: PropertyValues<this>) {
     super.update(changedProps);
     if (this.supperTimeEl) this.supperTimeEl.hass = this.hass;
@@ -93,15 +92,17 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
       this.selectedDate = this.allDates.find((s) => isDateToday(s.date))?.date;
     }
     this.selectedSupper = this.allDates.find(
-      (s) => s.date === this.selectedDate
+      (s) => s.date === this.selectedDate,
     )?.name;
-    this.isTodaySelected = !!this.selectedDate && isDateToday(this.selectedDate);
+    this.isTodaySelected =
+      !!this.selectedDate && isDateToday(this.selectedDate);
     /** Milliseconds from now until supper should start. */
     this.actionTimeRemaining =
       +new Date(`${this.selectedDate}T${this.targetTime}`) - +new Date();
 
     const nineDaysOffset =
-      (+new Date(this.selectedDate || new Date()) - +new Date(this.nineDaysStart)) /
+      (+new Date(this.selectedDate || new Date()) -
+        +new Date(this.nineDaysStart)) /
       (24 * 60 * 60 * 1000);
     this.isNineDays = nineDaysOffset >= 0 && nineDaysOffset < 9;
   }
@@ -232,7 +233,9 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
         top: 0;
         z-index: 8;
         background-color: var(--background-color);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+        box-shadow:
+          0 3px 6px rgba(0, 0, 0, 0.16),
+          0 3px 6px rgba(0, 0, 0, 0.23);
 
         &::before {
           content: "";
@@ -489,8 +492,8 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
     >
       <div class="Icon">
         ${dateInfo.name
-        ? html`<img src="/local/suppers/${dateInfo.image}" />`
-        : html`<ha-icon icon="mdi:help-circle-outline"></ha-icon>`}
+          ? html`<img src="/local/suppers/${dateInfo.image}" />`
+          : html`<ha-icon icon="mdi:help-circle-outline"></ha-icon>`}
       </div>
       <div class="Label">
         <b>

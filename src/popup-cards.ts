@@ -1,4 +1,8 @@
-import { HomeAssistant, LovelaceCard, LovelaceConfig } from "custom-card-helpers/dist/types";
+import {
+  HomeAssistant,
+  LovelaceCard,
+  LovelaceConfig,
+} from "custom-card-helpers/dist/types";
 import { bindEntity, SimpleEntityBasedElement } from "./base-elements.ts";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
@@ -34,7 +38,8 @@ class PopupCardRendererElement extends LitElement {
   }
 
   update(changedProps: PropertyValues<this>) {
-    if (changedProps.has("cardEntities") || changedProps.has("helpers")) this.createCards();
+    if (changedProps.has("cardEntities") || changedProps.has("helpers"))
+      this.createCards();
     this.cardMap.forEach((card) => (card.hass = this.hass));
     super.update(changedProps);
   }
@@ -89,14 +94,11 @@ class PopupCardRendererElement extends LitElement {
     const renderedCards = [...this.cardMap].map(([id, card]) => {
       const isHidden = !this.cardsToRender.includes(id);
       return html`<div class="CardWrapper ${isHidden ? "Hidden" : ""}">
-            ${card} ${isHidden ? html`<span></span>` : null}
-          </div>`;
+        ${card} ${isHidden ? html`<span></span>` : null}
+      </div>`;
     });
     return html`
-      <div class="Root">
-        ${renderedCards}
-        ${this.renderErrorCard()}
-      </div>
+      <div class="Root">${renderedCards} ${this.renderErrorCard()}</div>
     `;
   }
 
@@ -118,7 +120,7 @@ class PopupCardRendererElement extends LitElement {
   async createCards() {
     if (!this.hass || !this.helpers) return;
     const newCardIds = this.cardEntities.filter(
-      (id) => !this.cardMap.has(id) && !this.missingCards.includes(id)
+      (id) => !this.cardMap.has(id) && !this.missingCards.includes(id),
     );
 
     const popupCardsDashboard = await this.hass.callWS<LovelaceConfig>({
@@ -127,7 +129,7 @@ class PopupCardRendererElement extends LitElement {
     });
     const allCards = popupCardsDashboard.views.flatMap((v) => v.cards ?? []);
     const newCards = allCards.filter(({ entity }) =>
-      newCardIds.includes(entity)
+      newCardIds.includes(entity),
     );
 
     newCards.forEach((c) => {
@@ -139,10 +141,10 @@ class PopupCardRendererElement extends LitElement {
       this.cardMap.set(c.entity, this.helpers!.createCardElement(c));
     });
     this.missingCards = this.cardEntities.filter(
-      (entity) => !allCards.some((c) => c.entity === entity)
+      (entity) => !allCards.some((c) => c.entity === entity),
     );
     this.cardsToRender = this.cardEntities.filter((entity) =>
-      allCards.some((c) => c.entity === entity)
+      allCards.some((c) => c.entity === entity),
     );
     this.requestUpdate();
   }
@@ -155,15 +157,13 @@ class AutoPopupCardsElement extends SimpleEntityBasedElement {
     cardEntities: { state: true, entity: "sensor.dashboard_alerts" },
   };
 
-
   @property({ attribute: false })
   @bindEntity({ entityId: "sensor.dashboard_alerts" })
-  cardEntities = '[]';
+  cardEntities = "[]";
 
-
-  setConfig() { }
+  setConfig() {}
   render() {
-    if (!this.hass) return html`<div>Loading...</div>`
+    if (!this.hass) return html`<div>Loading...</div>`;
     return html`<popup-card-renderer
       .hass=${this.hass}
       cardEntities=${JSON.parse(this.cardEntities)}
@@ -216,7 +216,6 @@ window.showPopupCards = function () {
 
 declare global {
   interface Window {
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     browser_mod: any;
     showingPopupCards: boolean;

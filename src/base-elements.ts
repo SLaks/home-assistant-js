@@ -2,8 +2,17 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { LitElement, PropertyValues } from "lit";
 import { property } from "lit/decorators/property.js";
 
-export function bindEntity({ entityId, attributeName }: { entityId: string, attributeName?: string }) {
-  return function <T extends SimpleEntityBasedElement>(target: T, propertyName: keyof T) {
+export function bindEntity({
+  entityId,
+  attributeName,
+}: {
+  entityId: string;
+  attributeName?: string;
+}) {
+  return function <T extends SimpleEntityBasedElement>(
+    target: T,
+    propertyName: keyof T,
+  ) {
     (target.entityBindings ??= []).push({
       propertyName,
       entityId,
@@ -26,9 +35,11 @@ export class SimpleEntityBasedElement extends LitElement {
   shouldUpdate(changedProps: PropertyValues<this>) {
     const oldHass = changedProps.get("hass");
     if (!oldHass) return true;
-    return this.entityBindings?.some(
-      (p) => oldHass.states[p.entityId] !== this.hass?.states[p.entityId]
-    ) ?? false;
+    return (
+      this.entityBindings?.some(
+        (p) => oldHass.states[p.entityId] !== this.hass?.states[p.entityId],
+      ) ?? false
+    );
   }
 
   update(changedProps: PropertyValues<this>) {
