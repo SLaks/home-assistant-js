@@ -84,8 +84,8 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
   @bindEntity({ entityId: "sensor.9_days_start" })
   nineDaysStart = "";
 
-  update(changedProps: PropertyValues<this>) {
-    super.update(changedProps);
+  willUpdate(changedProps: PropertyValues<this>) {
+    super.willUpdate(changedProps);
     if (this.supperTimeEl) this.supperTimeEl.hass = this.hass;
 
     if (!this.selectedDate) {

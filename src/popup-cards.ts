@@ -37,11 +37,10 @@ class PopupCardRendererElement extends LitElement {
     window.loadCardHelpers().then((h) => (this.helpers = h));
   }
 
-  update(changedProps: PropertyValues<this>) {
-    if (changedProps.has("cardEntities") || changedProps.has("helpers"))
-      this.createCards();
+  willUpdate(changedProps: PropertyValues<this>) {
+    if (changedProps.has("cardEntities")) this.createCards();
     this.cardMap.forEach((card) => (card.hass = this.hass));
-    super.update(changedProps);
+    super.willUpdate(changedProps);
   }
 
   static styles = css`

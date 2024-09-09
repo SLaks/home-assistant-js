@@ -34,7 +34,7 @@ export class SimpleEntityBasedElement extends LitElement {
 
   shouldUpdate(changedProps: PropertyValues<this>) {
     const oldHass = changedProps.get("hass");
-    if (!oldHass) return true;
+    if (!oldHass || changedProps.size > 1) return true;
     return (
       this.entityBindings?.some(
         (p) => oldHass.states[p.entityId] !== this.hass?.states[p.entityId],
@@ -42,8 +42,9 @@ export class SimpleEntityBasedElement extends LitElement {
     );
   }
 
-  update(changedProps: PropertyValues<this>) {
-    if (!this.hass || !this.entityBindings) return super.update(changedProps);
+  willUpdate(changedProps: PropertyValues<this>) {
+    if (!this.hass || !this.entityBindings)
+      return super.willUpdate(changedProps);
     for (const info of this.entityBindings) {
       if (!info.entityId) continue;
       const state = this.hass.states[info.entityId];
@@ -51,6 +52,6 @@ export class SimpleEntityBasedElement extends LitElement {
         ? state.attributes[info.attributeName]
         : state.state;
     }
-    return super.update(changedProps);
+    return super.willUpdate(changedProps);
   }
 }
