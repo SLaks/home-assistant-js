@@ -10,5 +10,13 @@ export interface CardHelpers {
 declare global {
   interface Window {
     loadCardHelpers(): Promise<CardHelpers>;
+    customCards?: CustomCardEntry[];
   }
+}
+interface CustomCardEntry {
+  type: string;
+  name?: string;
+  description?: string;
+  preview?: boolean;
+  documentationURL?: string;
 }

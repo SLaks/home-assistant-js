@@ -10,14 +10,6 @@ import { CardHelpers } from "./types.ts";
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardRendererElement extends LitElement {
-  static properties = {
-    hass: { attribute: true },
-    cardEntities: { attribute: true },
-    helpers: { state: true },
-    missingCards: { state: true },
-    cardsToRender: { state: true },
-  };
-
   @property({ attribute: false })
   hass?: HomeAssistant;
 
@@ -92,7 +84,11 @@ class PopupCardRendererElement extends LitElement {
     if (!this.cardsToRender) return html`Loading...`;
     const renderedCards = [...this.cardMap].map(([id, card]) => {
       const isHidden = !this.cardsToRender.includes(id);
-      return html`<div class="CardWrapper ${isHidden ? "Hidden" : ""}">
+      return html`<div
+        class="CardWrapper ${isHidden ? "Hidden" : ""}"
+        @transitionend=${() =>
+          this.dispatchEvent(new Event("card-transitioned"))}
+      >
         ${card} ${isHidden ? html`<span></span>` : null}
       </div>`;
     });
@@ -150,36 +146,99 @@ class PopupCardRendererElement extends LitElement {
 }
 customElements.define("popup-card-renderer", PopupCardRendererElement);
 
-class AutoPopupCardsElement extends SimpleEntityBasedElement {
-  static properties = {
-    hass: { attribute: false },
-    cardEntities: { state: true, entity: "sensor.dashboard_alerts" },
-  };
-
+class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
   @bindEntity({ entityId: "sensor.dashboard_alerts" })
   cardEntities = "[]";
 
-  setConfig() {}
-  render() {
-    if (!this.hass) return html`<div>Loading...</div>`;
-    return html`<popup-card-renderer
-      .hass=${this.hass}
-      cardEntities=${JSON.parse(this.cardEntities)}
-    ></popup-card-renderer>`;
+  @state()
+  reopenDelayMs = 0;
+
+  @state()
+  browserIds?: Set<string>;
+
+  @state()
+  private editMode = false;
+
+  @state()
+  private isOpen = false;
+
+  override shouldUpdate(): boolean {
+    return true; // Always update, in case cards consume other entities.
+  }
+  override willUpdate(changedProps: PropertyValues<this>): void {
+    const previousEntities = this.cardEntities;
+    super.willUpdate(changedProps);
+    if (previousEntities !== this.cardEntities && this.cardEntities !== "[]")
+      this.isOpen = true;
   }
 
-  connectedCallback() {
-    window.showingPopupCards = true;
-    super.connectedCallback();
+  setConfig(config: Record<string, unknown>) {
+    this.reopenDelayMs = parseInt(config.reopen_delay_ms as string) ?? 0;
+    this.browserIds = config.browser_ids
+      ? new Set(config.browser_ids as string[])
+      : undefined;
   }
-  disconnectedCallback() {
-    window.showingPopupCards = false;
-    super.disconnectedCallback();
+  async connectedCallback() {
+    super.connectedCallback();
+
+    if (this.parentElement?.localName === "hui-card-preview") {
+      this.editMode = true;
+    }
+  }
+
+  static styles = css`
+    :host {
+      --mdc-dialog-min-width: 30px;
+      --mdc-dialog-max-width: 90vw;
+    }
+  `;
+
+  override render() {
+    if (this.editMode) {
+      return html`<ha-card style="padding: 12px;">
+        This invisible card shows popups when there are popup cards.
+      </ha-card>`;
+    }
+    const entities: string[] = JSON.parse(this.cardEntities);
+    if (!(this.browserIds?.has(window.browser_mod?.browserID ?? "") ?? true))
+      return html`<div></div>`;
+    if (!this.hass) return html`<div></div>`;
+    return html`<ha-dialog
+      ?open=${this.isOpen}
+      @closed=${this.onClosed}
+      hideActions
+    >
+      <div class="content" dialogInitialFocus>
+        <popup-card-renderer
+          .cardEntities=${entities}
+          .hass=${this.hass}
+          @card-transitioned=${this.onCardHidden}
+        >
+        </popup-card-renderer>
+      </div>
+    </ha-dialog>`;
+  }
+
+  onCardHidden() {
+    if (this.cardEntities === "[]") this.isOpen = false;
+  }
+
+  onClosed() {
+    this.isOpen = false;
+    if (!this.reopenDelayMs || this.cardEntities === "[]") return;
+    setTimeout(() => {
+      if (this.cardEntities !== "[]") this.isOpen = true;
+    }, this.reopenDelayMs);
   }
 }
-
-customElements.define("auto-popup-cards", AutoPopupCardsElement);
+customElements.define("popup-card-runner", PopupCardRunnerElement);
+window.customCards ??= [];
+window.customCards.push({
+  type: "popup-card-runner",
+  name: "Popup Card Runner",
+  description: "Automatically opens a popup with active popup cards.",
+});
 
 class ManualPopupCardsElement extends LitElement {
   @property({ attribute: false })
@@ -202,22 +261,8 @@ class ManualPopupCardsElement extends LitElement {
 
 customElements.define("manual-popup-cards", ManualPopupCardsElement);
 
-window.showPopupCards = function () {
-  if (window.showingPopupCards) return;
-  window.browser_mod.service("popup", {
-    content: { type: "custom:auto-popup-cards" },
-    style: `
-          --popup-min-width: 30px;
-          --popup-max-width: 90vw;
-        `,
-  });
-};
-
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    browser_mod: any;
-    showingPopupCards: boolean;
-    showPopupCards: () => void;
+    browser_mod?: { browserID: string };
   }
 }
