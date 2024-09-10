@@ -6,8 +6,8 @@ import { property, state } from "lit/decorators.js";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
-  @bindEntity({ entityId: "sensor.dashboard_alerts" })
-  cardEntities = "[]";
+  @bindEntity({ entityId: "sensor.dashboard_alerts", converter: JSON.parse })
+  cardEntities: string[] = [];
 
   @state()
   reopenDelayMs = 0;
@@ -27,7 +27,10 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   override willUpdate(changedProps: PropertyValues<this>): void {
     const previousEntities = this.cardEntities;
     super.willUpdate(changedProps);
-    if (previousEntities !== this.cardEntities && this.cardEntities !== "[]")
+    if (
+      previousEntities.join() !== this.cardEntities.join() &&
+      this.cardEntities.length
+    )
       this.isOpen = true;
   }
 
@@ -58,8 +61,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
         This invisible card shows popups when there are popup cards.
       </ha-card>`;
     }
-    const entities: string[] = JSON.parse(this.cardEntities);
-    if (!(this.browserIds?.has(window.browser_mod?.browserID ?? "") ?? true))
+    if (this.browserIds?.has(window.browser_mod?.browserID ?? "") === false)
       return html`<div></div>`;
     if (!this.hass) return html`<div></div>`;
     return html`<ha-dialog
@@ -69,7 +71,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     >
       <div class="content" dialogInitialFocus>
         <popup-card-renderer
-          .cardEntities=${entities}
+          .cardEntities=${this.cardEntities}
           .hass=${this.hass}
           @card-transitioned=${this.onCardHidden}
         >
@@ -79,14 +81,14 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   }
 
   onCardHidden() {
-    if (this.cardEntities === "[]") this.isOpen = false;
+    if (this.cardEntities.length) this.isOpen = false;
   }
 
   onClosed() {
     this.isOpen = false;
-    if (!this.reopenDelayMs || this.cardEntities === "[]") return;
+    if (!this.reopenDelayMs || !this.cardEntities.length) return;
     setTimeout(() => {
-      if (this.cardEntities !== "[]") this.isOpen = true;
+      if (this.cardEntities.length) this.isOpen = true;
     }, this.reopenDelayMs);
   }
 }

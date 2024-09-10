@@ -2,33 +2,30 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { LitElement, PropertyValues } from "lit";
 import { property } from "lit/decorators/property.js";
 
-export function bindEntity({
-  entityId,
-  attributeName,
-}: {
-  entityId: string;
-  attributeName?: string;
-}) {
-  return function <T extends SimpleEntityBasedElement>(
-    target: T,
-    propertyName: keyof T,
-  ) {
+export function bindEntity<
+  T extends SimpleEntityBasedElement,
+  TProperty extends keyof T,
+>(opts: Omit<EntityBinding<T, TProperty>, "propertyName">) {
+  return function (target: T, propertyName: TProperty) {
     (target.entityBindings ??= []).push({
+      ...opts,
       propertyName,
-      entityId,
-      attributeName,
     });
   };
 }
 
-interface EntityBinding<T extends SimpleEntityBasedElement> {
+interface EntityBinding<
+  T extends SimpleEntityBasedElement,
+  TProperty extends keyof T,
+> {
   propertyName: keyof T;
   entityId: string;
   attributeName?: string;
+  converter?: (value: string) => T[TProperty];
 }
 
 export class SimpleEntityBasedElement extends LitElement {
-  entityBindings?: EntityBinding<this>[];
+  entityBindings?: EntityBinding<this, keyof this>[];
 
   @property({ attribute: false }) hass?: HomeAssistant;
 
@@ -48,9 +45,10 @@ export class SimpleEntityBasedElement extends LitElement {
     for (const info of this.entityBindings) {
       if (!info.entityId) continue;
       const state = this.hass.states[info.entityId];
-      this[info.propertyName] = info.attributeName
+      const value = info.attributeName
         ? state.attributes[info.attributeName]
         : state.state;
+      this[info.propertyName] = info.converter ? info.converter(value) : value;
     }
     return super.willUpdate(changedProps);
   }
