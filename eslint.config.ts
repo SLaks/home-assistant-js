@@ -12,4 +12,5 @@ export default [
   pluginLit.configs["flat/all"],
   ...tseslint.configs.recommended,
   { rules: { "lit/no-template-map": "off" } },
+  { rules: { "lit/no-template-arrow": "off" } },
 ] satisfies Linter.FlatConfig[];
