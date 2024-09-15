@@ -161,11 +161,11 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
           </a>
           ${this.allDates.map(
             (d) =>
-              html`<date-tab
+              html`<supper-date-tab
                 .dateInfo=${d}
                 .isSelected=${d.date === this.selectedDate}
                 @click=${() => (this.selectedDate = d.date)}
-              ></date-tab>`,
+              ></supper-date-tab>`,
           )}
         </div>
         <supper-list-selector

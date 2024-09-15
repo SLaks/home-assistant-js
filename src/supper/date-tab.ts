@@ -173,4 +173,4 @@ const weekdayFormat = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
-customElements.define("date-tab", DateTabElement);
+customElements.define("supper-date-tab", DateTabElement);
