@@ -44,7 +44,12 @@ export class SimpleEntityBasedElement extends LitElement {
       return super.willUpdate(changedProps);
     for (const info of this.entityBindings) {
       if (!info.entityId) continue;
+
       const state = this.hass.states[info.entityId];
+
+      // Ignore unchanged states so that the converter doesn't produce a false positive change
+      // (eg, if it returns a new object every call).
+      if (changedProps.get("hass")?.states[info.entityId] === state) continue;
       const value = info.attributeName
         ? state.attributes[info.attributeName]
         : state.state;
