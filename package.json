@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "eslint --flag unstable_ts_config && tsc && vite build",
     "preview": "vite preview",
-    "release": "npm run build && gh release create --generate-notes ./dist/slaks-ui.js"
+    "release": "npm run build && powershell gh release create $(Get-Date -Format 'yyyy-MM-dd-HH-mm') --generate-notes ./dist/slaks-ui.js"
   },
   "dependencies": {
     "custom-card-helpers": "^1.9.0",
