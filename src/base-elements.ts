@@ -40,7 +40,8 @@ export class SimpleEntityBasedElement extends LitElement {
   }
 
   willUpdate(changedProps: PropertyValues<this>) {
-    if (!this.hass || !this.entityBindings)
+    // If hass didn't change, we don't need to do anything here.
+    if (!this.hass || !this.entityBindings || !changedProps.has("hass"))
       return super.willUpdate(changedProps);
     for (const info of this.entityBindings) {
       if (!info.entityId) continue;

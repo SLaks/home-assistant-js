@@ -77,7 +77,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     if (this.browserIds?.has(window.browser_mod?.browserID ?? "") === false)
       return html`<div></div>`;
     if (!this.hass) return html`<div></div>`;
-    return html` <todo-items-subscriber
+    return html`<todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.todoEntityId)}
         @items-updated=${(e: CustomEvent<TodoItem[]>) =>

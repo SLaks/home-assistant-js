@@ -42,7 +42,8 @@ class PopupCardRendererElement extends LitElement {
 
   willUpdate(changedProps: PropertyValues<this>) {
     super.willUpdate(changedProps);
-    if (changedProps.has("cardEntities")) this.createCards();
+    if (changedProps.has("cardEntities") || changedProps.has("helpers"))
+      this.createCards();
     if (changedProps.has("todoItems")) this.updateTodos();
     this.cardMap.forEach((card) => (card.hass = this.hass));
   }
