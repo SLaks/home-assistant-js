@@ -9,6 +9,7 @@ import { property, state } from "lit/decorators.js";
 import { CardHelpers } from "../types";
 import { TodoItem, TodoItemStatus } from "./todos";
 import { classMap } from "lit/directives/class-map.js";
+import { repeat } from "lit/directives/repeat.js";
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardRendererElement extends LitElement {
@@ -70,7 +71,7 @@ class PopupCardRendererElement extends LitElement {
       max-height: 80vh;
 
       margin-left: -16px;
-      > * {
+      > div {
         /* This is animated to 0 for hidden cards */
         margin-left: 16px;
       }
@@ -111,32 +112,42 @@ class PopupCardRendererElement extends LitElement {
   }
 
   render() {
-    const renderedCards = [...this.cardMap].map(([id, card]) => {
-      const isHidden = !this.cardsToRender.includes(id);
-      return html`<div
-        class="CardWrapper ${classMap({ isHidden })}"
-        @transitionend=${this.onCardTransitionEnd}
-      >
-        ${card} ${isHidden ? html`<span></span>` : null}
-      </div>`;
-    });
-    renderedCards.push(
-      ...[...this.todoMap.values()].map((item) => {
-        const isHidden = item.status === TodoItemStatus.Completed;
-        return html`<div
-          class="CardWrapper ${classMap({ isHidden })}"
-          @transitionend=${this.onCardTransitionEnd}
-        >
-          <popup-todo-card
-            entity-id=${this.todoEntityId!}
-            .hass=${this.hass}
-            .item=${item}
-          ></popup-todo-card>
-        </div>`;
-      }),
-    );
     return html`
-      <div class="Root">${renderedCards} ${this.renderErrorCard()}</div>
+      <div class="Root">
+        ${repeat(
+          this.cardMap,
+          ([id]) => id,
+          ([id, card]) => {
+            const isHidden = !this.cardsToRender.includes(id);
+            return html`<div
+              class="CardWrapper ${classMap({ isHidden })}"
+              @transitionend=${this.onCardTransitionEnd}
+            >
+              ${card} ${isHidden ? html`<span></span>` : null}
+            </div>`;
+          },
+        )}
+        <!-- Render a different element to prevent cards of different types from morphing into eachother. -->
+        <span></span>
+        ${repeat(
+          this.todoMap.values(),
+          ({ uid }) => uid,
+          (item) => {
+            const isHidden = item.status === TodoItemStatus.Completed;
+            return html`<div
+              class="CardWrapper ${classMap({ isHidden })}"
+              @transitionend=${this.onCardTransitionEnd}
+            >
+              <popup-todo-card
+                entity-id=${this.todoEntityId!}
+                .hass=${this.hass}
+                .item=${item}
+              ></popup-todo-card>
+            </div>`;
+          },
+        )}
+        ${this.renderErrorCard()}
+      </div>
     `;
   }
 
