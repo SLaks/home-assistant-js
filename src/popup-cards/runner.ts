@@ -9,7 +9,7 @@ import { ifDefined } from "lit/directives/if-defined.js";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
-  @bindEntity({ entityId: "sensor.dashboard_alerts", converter: JSON.parse })
+  @bindEntity({ entityIdProperty: "cardListEntityId", converter: JSON.parse })
   cardEntities: string[] = [];
 
   @state()
@@ -20,6 +20,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
   @state()
   todoEntityId?: string;
+
+  @state()
+  cardListEntityId?: string;
 
   @state()
   private editMode = false;
@@ -52,6 +55,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     this.reopenDelayMs = parseInt(config.reopen_delay_ms as string) ?? 0;
     if (this.todoEntityId !== config.todo_entity_id) this.todoItems = [];
     this.todoEntityId = config.todo_entity_id as string;
+    this.cardListEntityId = config.card_list_entity_id as string;
     this.browserIds = config.browser_ids
       ? new Set(config.browser_ids as string[])
       : undefined;
