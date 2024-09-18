@@ -1,4 +1,4 @@
-import "./renderer.ts";
+import "./card-list.ts";
 import "./todos.ts";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements.ts";
@@ -88,14 +88,14 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
     // After the close animation finishes, remove this element entirely.
     // This prevents us from leaking cached rendered card elements.
-    const content = html`<popup-card-renderer
+    const content = html`<popup-card-list
       .cardEntities=${this.cardEntities}
       .hass=${this.hass}
       .todoEntityId=${this.todoEntityId}
       .todoItems=${this.todoItems}
       @card-transitioned=${this.onCardHidden}
     >
-    </popup-card-renderer>`;
+    </popup-card-list>`;
 
     return html`<todo-items-subscriber
         .hass=${this.hass}

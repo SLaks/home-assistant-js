@@ -14,7 +14,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 
 /** Renders a list of entity IDs as popup cards */
-class PopupCardRendererElement extends LitElement {
+class PopupCardListElement extends LitElement {
   @property({ attribute: false })
   hass?: HomeAssistant;
 
@@ -203,7 +203,7 @@ class PopupCardRendererElement extends LitElement {
     this.requestUpdate();
   }
 }
-customElements.define("popup-card-renderer", PopupCardRendererElement);
+customElements.define("popup-card-list", PopupCardListElement);
 
 interface NewerLovelaceConfig extends LovelaceConfig {
   views: NewerLovelaceViewConfig[];
