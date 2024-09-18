@@ -73,6 +73,10 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       --mdc-dialog-min-width: 30px;
       --mdc-dialog-max-width: 90vw;
     }
+    /* Don't let the height change after the cards are removed. */
+    .content {
+      height: 300px;
+    }
   `;
 
   override render() {
@@ -81,6 +85,18 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     if (this.browserIds?.has(window.browser_mod?.browserID ?? "") === false)
       return html`<div></div>`;
     if (!this.hass) return html`<div></div>`;
+
+    // After the close animation finishes, remove this element entirely.
+    // This prevents us from leaking cached rendered card elements.
+    const content = html`<popup-card-renderer
+      .cardEntities=${this.cardEntities}
+      .hass=${this.hass}
+      .todoEntityId=${this.todoEntityId}
+      .todoItems=${this.todoItems}
+      @card-transitioned=${this.onCardHidden}
+    >
+    </popup-card-renderer>`;
+
     return html`<todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.todoEntityId)}
@@ -89,14 +105,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       ></todo-items-subscriber>
       <ha-dialog ?open=${this.isOpen} @closed=${this.onClosed} hideActions>
         <div class="content" dialogInitialFocus>
-          <popup-card-renderer
-            .cardEntities=${this.cardEntities}
-            .hass=${this.hass}
-            .todoEntityId=${this.todoEntityId}
-            .todoItems=${this.todoItems}
-            @card-transitioned=${this.onCardHidden}
-          >
-          </popup-card-renderer>
+          ${this.isOpen ? content : null}
         </div>
       </ha-dialog>`;
   }
