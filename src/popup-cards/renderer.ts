@@ -2,7 +2,9 @@ import "./popup-todo-card";
 import {
   HomeAssistant,
   LovelaceCard,
+  LovelaceCardConfig,
   LovelaceConfig,
+  LovelaceViewConfig,
 } from "custom-card-helpers";
 import { css, html, LitElement, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
@@ -155,7 +157,7 @@ class PopupCardRendererElement extends LitElement {
     if (!this.missingCards.length) return;
     return html`<ha-card class="ErrorCard">
       <h2>
-        <ha-alert alert-type="error">Missinsg cards!</ha-alert>
+        <ha-alert alert-type="error">Missing cards!</ha-alert>
       </h2>
       <p>
         The following entites were requested, but have no popup cards defined:
@@ -172,11 +174,14 @@ class PopupCardRendererElement extends LitElement {
       (id) => !this.cardMap.has(id) && !this.missingCards.includes(id),
     );
 
-    const popupCardsDashboard = await this.hass.callWS<LovelaceConfig>({
+    const popupCardsDashboard = await this.hass.callWS<NewerLovelaceConfig>({
       type: "lovelace/config",
       url_path: "popup-cards",
     });
-    const allCards = popupCardsDashboard.views.flatMap((v) => v.cards ?? []);
+    const allCards = popupCardsDashboard.views.flatMap((v) => [
+      ...(v.cards ?? []),
+      ...(v.sections?.flatMap((s) => s.cards ?? []) ?? []),
+    ]);
     const newCards = allCards.filter(({ entity }) =>
       newCardIds.includes(entity),
     );
@@ -199,3 +204,14 @@ class PopupCardRendererElement extends LitElement {
   }
 }
 customElements.define("popup-card-renderer", PopupCardRendererElement);
+
+interface NewerLovelaceConfig extends LovelaceConfig {
+  views: NewerLovelaceViewConfig[];
+}
+interface NewerLovelaceViewConfig extends LovelaceViewConfig {
+  sections?: LovelaceSectionConfig[];
+}
+interface LovelaceSectionConfig {
+  cards?: LovelaceCardConfig[];
+  // I don't care about the other properties.
+}
