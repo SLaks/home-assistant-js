@@ -2,6 +2,11 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { LitElement, PropertyValues } from "lit";
 import { property } from "lit/decorators/property.js";
 
+/** Converts a binary_sensor state value to a boolean. */
+export function stateToBool(state: string) {
+  return state === "on";
+}
+
 export function bindEntity<
   T extends SimpleEntityBasedElement,
   TProperty extends keyof T,

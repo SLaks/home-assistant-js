@@ -1,3 +1,4 @@
+import "./snoozer";
 import { css, html, LitElement, PropertyValues } from "lit";
 import { TodoDetails, TodoItem, TodoItemStatus, updateItem } from "./todos";
 import { property, state } from "lit/decorators.js";
@@ -27,7 +28,7 @@ class PopupTodoCard extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4% 0;
+      padding-top: 4%;
 
       font-size: 1.2rem;
       text-align: center;
@@ -38,6 +39,7 @@ class PopupTodoCard extends LitElement {
         align-self: stretch;
         display: flex;
         place-content: center;
+        min-height: 0;
 
         svg {
           width: 80%;
@@ -47,6 +49,12 @@ class PopupTodoCard extends LitElement {
       &.isCompleted {
         background-color: #388e3c;
         color: white;
+      }
+
+      popup-todo-snoozer {
+        align-self: stretch;
+        flex-shrink: 0;
+        margin-top: 4%;
       }
     }
   `;
@@ -85,6 +93,14 @@ class PopupTodoCard extends LitElement {
         </div>
         <div class="Name">${this.item.summary}</div>
         <md-ripple></md-ripple>
+        <popup-todo-snoozer
+          .hass=${this.hass}
+          .entityId=${this.entityId}
+          .item=${this.item}
+          @closed=${(e: Event) => e.stopPropagation()}
+          @pointerdown=${(e: Event) => e.stopPropagation()}
+          @click=${(e: Event) => e.stopPropagation()}
+        ></popup-todo-snoozer>
       </ha-card>
     `;
   }
