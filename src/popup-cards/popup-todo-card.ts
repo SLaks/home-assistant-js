@@ -59,7 +59,7 @@ class PopupTodoCard extends LitElement {
     if (changedProps.has("item")) {
       try {
         this.details = JSON.parse(this.item?.description ?? "{}") ?? {};
-      } catch (e) {
+      } catch {
         this.details = {};
       }
       this.emoji = this.details.emoji ?? defaultEmoji;
