@@ -9,7 +9,7 @@ import {
 import { css, html, LitElement, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { CardHelpers } from "../types";
-import { TodoItem, TodoItemStatus } from "./todos";
+import { shouldShowTodoCard, TodoItem } from "./todos";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -55,10 +55,7 @@ class PopupCardListElement extends LitElement {
     for (const item of this.todoItems) {
       // If we've already stored a completed item, keep updating it.
       // If we've never seen it before, don't store it at all.
-      if (
-        item.status !== TodoItemStatus.Completed ||
-        this.todoMap.has(item.uid)
-      )
+      if (shouldShowTodoCard(item) || this.todoMap.has(item.uid))
         this.todoMap.set(item.uid, item);
     }
   }
@@ -135,7 +132,7 @@ class PopupCardListElement extends LitElement {
           this.todoMap.values(),
           ({ uid }) => uid,
           (item) => {
-            const isHidden = item.status === TodoItemStatus.Completed;
+            const isHidden = !shouldShowTodoCard(item);
             return html`<div
               class="CardWrapper ${classMap({ isHidden })}"
               @transitionend=${this.onCardTransitionEnd}

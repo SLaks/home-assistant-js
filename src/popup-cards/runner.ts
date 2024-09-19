@@ -4,7 +4,7 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements.ts";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
-import { computeDueTimestamp, TodoItem } from "./todos.ts";
+import { shouldShowTodoCard, TodoItem } from "./todos.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
@@ -45,7 +45,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     if (changedProps.has("cardEntities") || changedProps.has("todoItems")) {
       this.cardCount =
         this.cardEntities.length +
-        this.todoItems.filter((i) => i.status === "needs_action").length;
+        this.todoItems.filter(shouldShowTodoCard).length;
 
       if (this.cardCount) this.isOpen = true;
     }
@@ -128,10 +128,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   }
 
   private onTodoItemsChanged(e: CustomEvent<TodoItem[]>) {
-    const now = new Date();
-    this.todoItems = e.detail.filter(
-      (item) => (computeDueTimestamp(item) ?? now) <= now,
-    );
+    // We filter the items in card-list.ts, so that it can update completed items
+    // as they animate away.
+    this.todoItems = e.detail;
   }
 
   private onCardHidden() {

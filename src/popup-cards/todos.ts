@@ -10,6 +10,13 @@ export interface TodoDetails {
   dueTime?: string;
 }
 
+/** Indicates whether a todo item should appear as a popup card. */
+export function shouldShowTodoCard(item: TodoItem) {
+  if (item.status === TodoItemStatus.Completed) return false;
+  const startTime = computeDueTimestamp(item);
+  return !startTime || startTime < new Date();
+}
+
 export function computeDueTimestamp(item: TodoItem): Date | null {
   if (!item.due) return null;
   if (item.due.includes("T")) return new Date(item.due);
