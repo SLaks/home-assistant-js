@@ -141,7 +141,7 @@ class PopupCardListElement extends LitElement {
               @transitionend=${this.onCardTransitionEnd}
             >
               <popup-todo-card
-                entity-id=${this.todoEntityId!}
+                .entityId=${this.todoEntityId!}
                 .hass=${this.hass}
                 .item=${item}
               ></popup-todo-card>
