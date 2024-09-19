@@ -1,6 +1,60 @@
+import { HassEntity } from "home-assistant-js-websocket";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { LitElement, PropertyValues } from "lit";
 import { property } from "lit/decorators.js";
+
+/** JSON that we store in the `description` field to save additional data. */
+export interface TodoDetails {
+  emoji?: string;
+  /** Stores due time if the todo entity does not support that. */
+  dueTime?: string;
+}
+
+export function computeDueTimestamp(item: TodoItem): Date | null {
+  if (!item.due) return null;
+  if (item.due.includes("T")) return new Date(item.due);
+  try {
+    const details = JSON.parse(item.description ?? "{}") as TodoDetails;
+    if (details.dueTime) return new Date(`${item.due}T${details.dueTime}`);
+  } catch {}
+  return new Date(item.due);
+}
+
+export function setDueTimestamp(
+  hass: HomeAssistant,
+  entityId: string,
+  item: TodoItem,
+  due: Date,
+) {
+  if (
+    supportsFeature(
+      hass.states[entityId],
+      TodoListEntityFeature.SET_DUE_DATETIME_ON_ITEM,
+    )
+  ) {
+    return updateItem(hass, entityId, { ...item, due: due.toISOString() });
+  } else {
+    const [date, time] = due.toISOString().split("T");
+    return updateItem(hass, entityId, {
+      ...item,
+      due: date,
+      description: JSON.stringify({
+        ...JSON.parse(item.description ?? "{}"),
+        dueTime: time,
+      }),
+    });
+  }
+}
+
+export const enum TodoListEntityFeature {
+  CREATE_TODO_ITEM = 1,
+  DELETE_TODO_ITEM = 2,
+  UPDATE_TODO_ITEM = 4,
+  MOVE_TODO_ITEM = 8,
+  SET_DUE_DATE_ON_ITEM = 16,
+  SET_DUE_DATETIME_ON_ITEM = 32,
+  SET_DESCRIPTION_ON_ITEM = 64,
+}
 
 export interface TodoList {
   entity_id: string;
@@ -101,3 +155,17 @@ class TodoItemsSubscriber extends LitElement {
 }
 
 customElements.define("todo-items-subscriber", TodoItemsSubscriber);
+
+export const supportsFeature = (
+  stateObj: HassEntity,
+  feature: number,
+): boolean => supportsFeatureFromAttributes(stateObj.attributes, feature);
+
+export const supportsFeatureFromAttributes = (
+  attributes: {
+    [key: string]: any;
+  },
+  feature: number,
+): boolean =>
+  // eslint-disable-next-line no-bitwise
+  (attributes.supported_features! & feature) !== 0;

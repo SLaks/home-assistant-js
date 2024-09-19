@@ -4,7 +4,7 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements.ts";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
-import { TodoItem } from "./todos.ts";
+import { computeDueTimestamp, TodoItem } from "./todos.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
@@ -100,8 +100,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     return html`<todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.todoEntityId)}
-        @items-updated=${(e: CustomEvent<TodoItem[]>) =>
-          (this.todoItems = e.detail)}
+        @items-updated=${this.onTodoItemsChanged}
       ></todo-items-subscriber>
       <ha-dialog ?open=${this.isOpen} @closed=${this.onClosed} hideActions>
         <div class="content" dialogInitialFocus>
@@ -126,6 +125,13 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     return html`<ha-alert alert-type="error">
       <code>todo_entity_id: ${this.todoEntityId}</code> not found
     </ha-alert>`;
+  }
+
+  private onTodoItemsChanged(e: CustomEvent<TodoItem[]>) {
+    const now = new Date();
+    this.todoItems = e.detail.filter(
+      (item) => (computeDueTimestamp(item) ?? now) <= now,
+    );
   }
 
   private onCardHidden() {

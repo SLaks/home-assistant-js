@@ -1,12 +1,8 @@
 import { css, html, LitElement, PropertyValues } from "lit";
-import { TodoItem, TodoItemStatus, updateItem } from "./todos";
+import { TodoDetails, TodoItem, TodoItemStatus, updateItem } from "./todos";
 import { property, state } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { classMap } from "lit/directives/class-map.js";
-
-interface TodoDetails {
-  emoji?: string;
-}
 
 const defaultEmoji = "☑️";
 
