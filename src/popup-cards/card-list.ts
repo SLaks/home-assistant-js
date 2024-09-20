@@ -61,23 +61,30 @@ class PopupCardListElement extends LitElement {
   }
 
   static styles = css`
-    .Root {
+    :host {
       --transition-func: cubic-bezier(0.4, 0, 0.2, 1);
       --transition-duration: 0.3s;
       display: flex;
+      justify-content: center;
       overflow: hidden;
       max-width: 80vw;
       max-height: 80vh;
 
       margin-left: -16px;
+      margin-top: -16px;
       > div {
         /* This is animated to 0 for hidden cards */
         margin-left: 16px;
+        margin-top: 16px;
       }
 
       .CardWrapper {
-        flex: 0 1 400px;
-        width: 400px;
+        /* 
+         * Use flex-grow to make rows with fewer items grow past the basis.
+         * Use max-width to prevent them from growing wider than the contained card.
+         */
+        flex: 1 1 400px;
+        max-width: 400px;
         min-width: 0;
         overflow: hidden;
         animation: show-card var(--transition-duration) var(--transition-func)
@@ -89,7 +96,9 @@ class PopupCardListElement extends LitElement {
         &.isHidden {
           margin-left: 0;
           flex-basis: 0;
+          min-width: 0;
           width: 0;
+          flex-grow: 0;
         }
       }
     }
@@ -112,41 +121,39 @@ class PopupCardListElement extends LitElement {
 
   render() {
     return html`
-      <div class="Root">
-        ${repeat(
-          this.cardMap,
-          ([id]) => id,
-          ([id, card]) => {
-            const isHidden = !this.cardsToRender.includes(id);
-            return html`<div
-              class="CardWrapper ${classMap({ isHidden })}"
-              @transitionend=${this.onCardTransitionEnd}
-            >
-              ${card} ${isHidden ? html`<span></span>` : null}
-            </div>`;
-          },
-        )}
-        <!-- Render a different element to prevent cards of different types from morphing into eachother. -->
-        <span></span>
-        ${repeat(
-          this.todoMap.values(),
-          ({ uid }) => uid,
-          (item) => {
-            const isHidden = !shouldShowTodoCard(item);
-            return html`<div
-              class="CardWrapper ${classMap({ isHidden })}"
-              @transitionend=${this.onCardTransitionEnd}
-            >
-              <popup-todo-card
-                .entityId=${this.todoEntityId!}
-                .hass=${this.hass}
-                .item=${item}
-              ></popup-todo-card>
-            </div>`;
-          },
-        )}
-        ${this.renderErrorCard()}
-      </div>
+      ${repeat(
+        this.cardMap,
+        ([id]) => id,
+        ([id, card]) => {
+          const isHidden = !this.cardsToRender.includes(id);
+          return html`<div
+            class="CardWrapper ${classMap({ isHidden })}"
+            @transitionend=${this.onCardTransitionEnd}
+          >
+            ${card} ${isHidden ? html`<span></span>` : null}
+          </div>`;
+        },
+      )}
+      <!-- Render a different element to prevent cards of different types from morphing into eachother. -->
+      <span></span>
+      ${repeat(
+        this.todoMap.values(),
+        ({ uid }) => uid,
+        (item) => {
+          const isHidden = !shouldShowTodoCard(item);
+          return html`<div
+            class="CardWrapper ${classMap({ isHidden })}"
+            @transitionend=${this.onCardTransitionEnd}
+          >
+            <popup-todo-card
+              .entityId=${this.todoEntityId!}
+              .hass=${this.hass}
+              .item=${item}
+            ></popup-todo-card>
+          </div>`;
+        },
+      )}
+      ${this.renderErrorCard()}
     `;
   }
 

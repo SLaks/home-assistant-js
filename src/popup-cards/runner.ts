@@ -75,7 +75,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     }
     /* Don't let the height change after the cards are removed. */
     .content {
-      height: 300px;
+      min-height: 300px;
     }
   `;
 
