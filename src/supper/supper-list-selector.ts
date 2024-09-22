@@ -1,3 +1,4 @@
+import "../todos/history-index";
 import { property, state } from "lit/decorators.js";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements";
 import { SupperActionInfo, SupperInfo } from "./data-types";
@@ -10,6 +11,8 @@ import {
   veryMobileMode,
 } from "./styles";
 import { classMap } from "lit/directives/class-map.js";
+import { TodoIndex } from "../todos/history-index";
+import dayjs from "dayjs";
 
 export class SupperListSelectorElement extends SimpleEntityBasedElement {
   @property()
@@ -43,6 +46,9 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
   @state()
   @bindEntity({ entityId: "input_select.sourdough_state" })
   sourdoughState = "";
+
+  @state()
+  supperHistory: TodoIndex = new Map();
 
   willUpdate(changedProps: PropertyValues<this>) {
     super.willUpdate(changedProps);
@@ -176,7 +182,14 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
   protected override render() {
     let suppers = this.suppers;
     if (this.isNineDays) suppers = suppers.slice().reverse();
-    return suppers.map((d) => this.renderSupperButton(d));
+    return html` <todo-history-index
+        .hass=${this.hass}
+        entity-id="todo.suppers"
+        index-field="description"
+        @todo-index-updated=${(e: CustomEvent<TodoIndex>) =>
+          (this.supperHistory = e.detail)}
+      ></todo-history-index>
+      ${suppers.map((d) => this.renderSupperButton(d))}`;
   }
   private renderSupperButton(supper: SupperInfo) {
     const isSelected = supper.name === this.selectedSupper;
@@ -194,11 +207,22 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
       @click=${() => this.setSupper(isSelected ? "" : supper.name)}
     >
       <div class="Caption">
-        <div>${supper.name}</div>
+        <div>
+          <div>${supper.name}</div>
+          ${this.renderSubcaption(supper)}
+        </div>
         <div>${supper.actions.map((a) => this.renderSupperAction(a))}</div>
       </div>
       <md-ripple></md-ripple>
     </div>`;
+  }
+
+  private renderSubcaption(supper: SupperInfo) {
+    const lastUse = this.supperHistory.get(supper.name)?.due;
+    if (!lastUse) return;
+    const diff = dayjs().diff(lastUse, "day");
+    if (diff === 1) return html`<i>Last made yesterday</i>`;
+    return html`<i>Last made ${diff} days ago</i>`;
   }
 
   private renderSupperAction(a: SupperActionInfo) {
