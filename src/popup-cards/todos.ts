@@ -22,7 +22,7 @@ export function computeDueTimestamp(item: TodoItem): Date | null {
   if (item.due.includes("T")) return new Date(item.due);
   try {
     const details = JSON.parse(item.description ?? "{}") as TodoDetails;
-    if (details.dueTime) return new Date(`${item.due}T${details.dueTime}`);
+    if (details.dueTime) return new Date(`${item.due} ${details.dueTime}`);
   } catch {
     // Ignore invalid JSON
   }
@@ -43,13 +43,13 @@ export function setDueTimestamp(
   ) {
     return updateItem(hass, entityId, { ...item, due: due.toISOString() });
   } else {
-    const [date, time] = due.toISOString().split("T");
+    const [date] = due.toISOString().split("T");
     return updateItem(hass, entityId, {
       ...item,
       due: date,
       description: JSON.stringify({
         ...JSON.parse(item.description ?? "{}"),
-        dueTime: time,
+        dueTime: due.toTimeString(),
       }),
     });
   }
