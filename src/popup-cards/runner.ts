@@ -35,7 +35,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   todoItems: TodoItem[] = [];
 
   @state()
-  private cardCount = 0;
+  cardCount = 0;
 
   override shouldUpdate(): boolean {
     return true; // Always update, in case cards consume other entities.
@@ -48,7 +48,11 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       this.cardEntities.length +
       this.todoItems.filter(shouldShowTodoCard).length;
 
-    if (this.cardCount) this.isOpen = true;
+    // If the count actually changed, reopen the popup.
+    // If this runs every time, isOpen will be stuck as
+    // true before the dialog finishes closing, and the
+    // dialog will never reopen.
+    if (changedProps.has("cardCount") && this.cardCount) this.isOpen = true;
   }
 
   setConfig(config: Record<string, unknown>) {
