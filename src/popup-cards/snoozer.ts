@@ -1,6 +1,6 @@
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
-import { setDueTimestamp, TodoItem } from "./todos";
+import { setDueTimestamp } from "./due-times";
 import {
   bindEntity,
   SimpleEntityBasedElement,
@@ -9,6 +9,7 @@ import {
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import { css, html, PropertyValues } from "lit";
+import { TodoItem } from "../todos/ha-api";
 
 interface SnoozeOption {
   label: string;

@@ -9,9 +9,10 @@ import {
 import { css, html, LitElement, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { CardHelpers } from "../types";
-import { shouldShowTodoCard, TodoItem } from "./todos";
+import { shouldShowTodoCard } from "./due-times";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
+import { TodoItem } from "../todos/ha-api";
 
 /** The default width of all cards (before flex-shrink). */
 const BASE_CARD_WIDTH = 400;
