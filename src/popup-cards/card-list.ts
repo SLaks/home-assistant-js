@@ -124,10 +124,11 @@ class PopupCardListElement extends LitElement {
 
       .CardWrapper {
         /* 
-         * Use flex-grow to make rows with fewer items grow past the basis.
+         * Use flex-grow to make rows with fewer items grow past the fixed width.
          * Use max-width to prevent them from growing wider than the contained card.
          */
-        flex: 1 1 var(--popup-card-width);
+        flex-grow: 1;
+        width: var(--popup-card-width);
         max-width: ${BASE_CARD_WIDTH}px;
         min-width: 0;
         overflow: hidden;
@@ -139,7 +140,6 @@ class PopupCardListElement extends LitElement {
         transition-property: flex-basis, margin-left, width;
         &.isHidden {
           margin-left: 0;
-          flex-basis: 0;
           min-width: 0;
           width: 0;
           flex-grow: 0;
