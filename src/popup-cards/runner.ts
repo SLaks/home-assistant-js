@@ -43,13 +43,12 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   override willUpdate(changedProps: PropertyValues<this>): void {
     super.willUpdate(changedProps);
 
-    if (changedProps.has("cardEntities") || changedProps.has("todoItems")) {
-      this.cardCount =
-        this.cardEntities.length +
-        this.todoItems.filter(shouldShowTodoCard).length;
+    // Always recount cards every minute in case a todo item reaches its due time.
+    this.cardCount =
+      this.cardEntities.length +
+      this.todoItems.filter(shouldShowTodoCard).length;
 
-      if (this.cardCount) this.isOpen = true;
-    }
+    if (this.cardCount) this.isOpen = true;
   }
 
   setConfig(config: Record<string, unknown>) {

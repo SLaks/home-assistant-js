@@ -60,7 +60,8 @@ class PopupCardListElement extends LitElement {
     super.willUpdate(changedProps);
     if (changedProps.has("cardEntities") || changedProps.has("helpers"))
       this.createCards();
-    if (changedProps.has("todoItems")) this.updateTodos();
+    if (changedProps.has("todoItems") || changedProps.has("cardCount"))
+      this.updateTodos();
     if (changedProps.has("cardCount")) this.calculateCardWidth();
     this.cardMap.forEach((card) => (card.hass = this.hass));
   }
