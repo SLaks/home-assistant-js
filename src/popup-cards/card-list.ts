@@ -13,6 +13,15 @@ import { shouldShowTodoCard, TodoItem } from "./todos";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 
+/** The default width of all cards (before flex-shrink). */
+const BASE_CARD_WIDTH = 400;
+/** The gap between cards. */
+const CARD_SPACING = 16;
+/** The minimum width of a card. */
+const MIN_CARD_WIDTH = 200;
+/** The height of all cards. */
+export const CARD_HEIGHT = 300;
+
 /** Renders a list of entity IDs as popup cards */
 class PopupCardListElement extends LitElement {
   @property({ attribute: false })
@@ -24,6 +33,10 @@ class PopupCardListElement extends LitElement {
   todoEntityId?: string;
   @property({ attribute: false, type: Array })
   todoItems: TodoItem[] = [];
+
+  /** The number of visible cards, as filtered by the caller. */
+  @property({ attribute: false })
+  cardCount = 0;
 
   @state()
   missingCards: string[] = [];
@@ -48,7 +61,37 @@ class PopupCardListElement extends LitElement {
     if (changedProps.has("cardEntities") || changedProps.has("helpers"))
       this.createCards();
     if (changedProps.has("todoItems")) this.updateTodos();
+    if (changedProps.has("cardCount")) this.calculateCardWidth();
     this.cardMap.forEach((card) => (card.hass = this.hass));
+  }
+
+  /**
+   * Calculates the ideal width for the densest row of cards.
+   *
+   * Flexbox applies wrap before shrink, so this is the only way to make cards
+   * shrink to a set minimum width _before_ wrapping to the next line.  We fit
+   * the cards into rows based on the minimum card width, then compute a width
+   * to maximize the width of the row with the most cards after rounding.
+   */
+  private calculateCardWidth() {
+    // Note: This includes the negative margin that cancels the first card's spacing.
+    // This lets us treat the card spacing as part of the card when dividing.
+    // Subtract a bit to make room for a vertical scrollbar.  If there is no
+    // scrollbar, flex-grow will expand to fit anyway.
+    let availableWidth = parseInt(getComputedStyle(this).maxWidth) - 20;
+    const rowCount = Math.ceil(
+      (this.cardCount * (MIN_CARD_WIDTH + CARD_SPACING)) / availableWidth,
+    );
+    const cardsPerRow = Math.ceil(this.cardCount / rowCount);
+    this.style.setProperty(
+      "--popup-card-width",
+      `${Math.min(
+        // Subtract the spacing, which is not part of the width.
+        availableWidth / cardsPerRow - CARD_SPACING,
+        BASE_CARD_WIDTH,
+      )}px`,
+    );
+    this.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
   }
 
   private updateTodos() {
@@ -66,16 +109,16 @@ class PopupCardListElement extends LitElement {
       --transition-duration: 0.3s;
       display: flex;
       justify-content: center;
-      overflow: hidden;
+      overflow: auto;
       max-width: 80vw;
       max-height: 80vh;
 
-      margin-left: -16px;
-      margin-top: -16px;
+      margin-left: -${CARD_SPACING}px;
+      margin-top: -${CARD_SPACING}px;
       > div {
         /* This is animated to 0 for hidden cards */
-        margin-left: 16px;
-        margin-top: 16px;
+        margin-left: ${CARD_SPACING}px;
+        margin-top: ${CARD_SPACING}px;
       }
 
       .CardWrapper {
@@ -83,8 +126,8 @@ class PopupCardListElement extends LitElement {
          * Use flex-grow to make rows with fewer items grow past the basis.
          * Use max-width to prevent them from growing wider than the contained card.
          */
-        flex: 1 1 400px;
-        max-width: 400px;
+        flex: 1 1 var(--popup-card-width);
+        max-width: ${BASE_CARD_WIDTH}px;
         min-width: 0;
         overflow: hidden;
         animation: show-card var(--transition-duration) var(--transition-func)

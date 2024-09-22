@@ -6,6 +6,7 @@ import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { shouldShowTodoCard, TodoItem } from "./todos.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
+import { CARD_HEIGHT } from "./card-list.ts";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
@@ -75,7 +76,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     }
     /* Don't let the height change after the cards are removed. */
     .content {
-      min-height: 300px;
+      min-height: ${CARD_HEIGHT}px;
     }
   `;
 
@@ -93,6 +94,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       .hass=${this.hass}
       .todoEntityId=${this.todoEntityId}
       .todoItems=${this.todoItems}
+      .cardCount=${this.cardCount}
       @card-transitioned=${this.onCardHidden}
     >
     </popup-card-list>`;
