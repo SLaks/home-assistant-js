@@ -171,10 +171,10 @@ class ManualPopupCardsElement extends LitElement {
     this.cardEntities = config.entities;
   }
   render() {
-    return html`<popup-card-renderer
+    return html`<popup-card-list
       .hass=${this.hass}
       .cardEntities=${this.cardEntities}
-    ></popup-card-renderer>`;
+    ></popup-card-list>`;
   }
 }
 
