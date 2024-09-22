@@ -23,7 +23,9 @@ export function computeDueTimestamp(item: TodoItem): Date | null {
   try {
     const details = JSON.parse(item.description ?? "{}") as TodoDetails;
     if (details.dueTime) return new Date(`${item.due}T${details.dueTime}`);
-  } catch {}
+  } catch {
+    // Ignore invalid JSON
+  }
   return new Date(item.due);
 }
 
@@ -170,9 +172,8 @@ export const supportsFeature = (
 
 export const supportsFeatureFromAttributes = (
   attributes: {
-    [key: string]: any;
+    supported_features?: number;
+    [key: string]: unknown;
   },
   feature: number,
-): boolean =>
-  // eslint-disable-next-line no-bitwise
-  (attributes.supported_features! & feature) !== 0;
+): boolean => (attributes.supported_features! & feature) !== 0;

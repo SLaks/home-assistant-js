@@ -79,7 +79,7 @@ class PopupCardListElement extends LitElement {
     // This lets us treat the card spacing as part of the card when dividing.
     // Subtract a bit to make room for a vertical scrollbar.  If there is no
     // scrollbar, flex-grow will expand to fit anyway.
-    let availableWidth = parseInt(getComputedStyle(this).maxWidth) - 20;
+    const availableWidth = parseInt(getComputedStyle(this).maxWidth) - 20;
     const rowCount = Math.ceil(
       (this.cardCount * (MIN_CARD_WIDTH + CARD_SPACING)) / availableWidth,
     );
