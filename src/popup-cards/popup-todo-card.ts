@@ -97,6 +97,7 @@ class PopupTodoCard extends LitElement {
           .hass=${this.hass}
           .entityId=${this.entityId}
           .item=${this.item}
+          @keydown=${(e: Event) => e.stopPropagation()}
           @closed=${(e: Event) => e.stopPropagation()}
           @pointerdown=${(e: Event) => e.stopPropagation()}
           @click=${(e: Event) => e.stopPropagation()}
