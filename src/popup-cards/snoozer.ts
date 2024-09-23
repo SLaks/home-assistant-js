@@ -55,35 +55,22 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
   }
   static styles = css`
     :host {
-      /* background: var(
-        --ha-dialog-surface-background,
-        var(--mdc-theme-surface, #fff)
-      );
-      color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87)); */
-      padding: 8px;
+      background: var(--primary-background-color);
+      color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
+      margin: 12px 12px 8px;
+      border-radius: 16px 16px;
+      padding: 4px 12px 12px;
+      --mdc-theme-primary: var(--mdc-theme-surface);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     }
     .Label {
-      text-align: left;
+      text-align: center;
       display: flex;
       align-items: center;
-      margin: 0 -8px;
-
-      &::before,
-      &::after {
-        content: "";
-        display: block;
-        border-top: 1px solid gray;
-        border-bottom: 1px solid
-          var(--ha-dialog-surface-background, var(--mdc-theme-surface, #fff));
-      }
-      &::before {
-        width: 16px;
-        margin-right: 4px;
-      }
-      &::after {
-        margin-left: 4px;
-        flex-grow: 1;
-      }
+      justify-content: space-between;
+      font-family: var(--mdc-typography-font-family, Roboto, sans-serif);
+      font-size: var(--mdc-typography-button-font-size, 0.875rem);
+      margin-left: 18px;
     }
 
     .Buttons {
@@ -91,6 +78,10 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      gap: 8px;
+      > * {
+        flex-grow: 1;
+      }
     }
 
     .MenuButtonIcon {
@@ -100,30 +91,30 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
     }
   `;
   protected override render(): unknown {
+    const menuButton = html` <ha-button-menu
+      @action=${this.handleSnoozeMenu}
+      corner="BOTTOM_END"
+      menucorner="END"
+      fixed
+    >
+      <ha-icon-button slot="trigger" label="More">
+        <ha-icon class="MenuButtonIcon" icon="mdi:dots-vertical"></ha-icon>
+      </ha-icon-button>
+
+      ${this.snoozeMenu.map(
+        (b) => html`<ha-list-item>${b.label}</ha-list-item>`,
+      )}
+    </ha-button-menu>`;
+
     return html`
-      <div class="Label">Snooze until</div>
+      <div class="Label">Snooze until ${menuButton}</div>
       <div class="Buttons">
         ${this.snoozeButtons.map(
           (b) =>
-            html`<ha-button @click=${() => this.snoozeTo(b.date)}>
+            html`<ha-button @click=${() => this.snoozeTo(b.date)} raised>
               ${b.label}
             </ha-button>`,
         )}
-
-        <ha-button-menu
-          @action=${this.handleSnoozeMenu}
-          corner="BOTTOM_END"
-          menucorner="END"
-          fixed
-        >
-          <ha-icon-button slot="trigger" label="More">
-            <ha-icon class="MenuButtonIcon" icon="mdi:dots-vertical"></ha-icon>
-          </ha-icon-button>
-
-          ${this.snoozeMenu.map(
-            (b) => html`<ha-list-item>${b.label}</ha-list-item>`,
-          )}
-        </ha-button-menu>
       </div>
     `;
   }
