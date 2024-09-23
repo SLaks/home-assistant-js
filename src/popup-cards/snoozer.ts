@@ -150,7 +150,10 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
 
     const nextWeek = this.motzeiDate?.add(1, "day").hour(8);
     if (nextWeek && !options.some(({ date }) => nextWeek.isSame(date, "day"))) {
-      options.push({ label: "Next week", date: nextWeek.toDate() });
+      options.push({
+        label: `Next ${nextWeek.format("dddd")}`,
+        date: nextWeek.toDate(),
+      });
     }
 
     const now = dayjs();
@@ -166,8 +169,8 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       date = date.add(1, "day")
     ) {
       let label = date.format("dddd");
-      if (this.erevDate?.isSame(date, "date")) {
-        label = `ערב ${date.day() === 5 ? "שבת" : "יום טוב"}`;
+      if (this.erevDate?.isSame(date, "date") && date.day() !== 5) {
+        label += " (ערב יום טוב)";
       } else if (this.motzeiDate?.isSame(date, "date")) {
         label = `מוצאי ${date.day() === 6 ? "שבת" : "יום טוב"}`;
       } else if (date.isBetween(this.erevDate!, this.motzeiDate!, "date")) {
