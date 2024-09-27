@@ -133,11 +133,11 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
 
     if (!this.isErev) {
       options.push({ label: "8:00 PM", date: today.hour(20).toDate() });
-      options.push({
-        label: "Tomorrow",
-        date: today.add(1, "day").hour(8).toDate(),
-      });
     }
+    options.push({
+      label: this.isErev ? this.motzeiLabel() : "Tomorrow",
+      date: today.add(1, "day").hour(8).toDate(),
+    });
 
     const nextWeek = this.motzeiDate?.add(1, "day").hour(8);
     if (nextWeek && !options.some(({ date }) => nextWeek.isSame(date, "day"))) {
@@ -163,7 +163,7 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       if (this.erevDate?.isSame(date, "date") && date.day() !== 5) {
         label += " (ערב יום טוב)";
       } else if (this.motzeiDate?.isSame(date, "date")) {
-        label = `מוצאי ${date.day() === 6 ? "שבת" : "יום טוב"}`;
+        label = this.motzeiLabel();
       } else if (date.isBetween(this.erevDate!, this.motzeiDate!, "date")) {
         continue;
       }
@@ -171,6 +171,10 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       options.push({ label, date: date.toDate() });
     }
     return options;
+  }
+
+  private motzeiLabel(): string {
+    return `מוצאי ${this.motzeiDate?.day() === 6 ? "שבת" : "יום טוב"}`;
   }
 }
 dayjs.extend(isBetween);
