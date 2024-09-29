@@ -31,7 +31,8 @@ export function computeDueTimestamp(item: TodoItem): Date | null {
   } catch {
     // Ignore invalid JSON
   }
-  return new Date(item.due);
+  // Parse the date, but add the current timezone offset so we don't interpret it in UTC
+  return new Date(+new Date(item.due) + new Date().getTimezoneOffset() * 60_000);
 }
 
 /**
