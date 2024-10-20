@@ -125,20 +125,42 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
   private renderEditMode() {
     return html`<ha-card style="padding: 12px;">
-      <p>This invisible card shows popups when there are popup cards.</p>
-      <p>${this.renderEditModeTodoInfo()}</p>
+      <p>This invisible card shows a popup with:</p>
+      <ul>
+        ${this.renderEditModePopupInfo()} ${this.renderEditModeTodoInfo()}
+      </ul>
     </ha-card>`;
   }
 
+  private renderEditModePopupInfo() {
+    if (!this.cardListEntityId) return null;
+    const cardListEntity = this.hass?.states[this.cardListEntityId];
+    if (cardListEntity) {
+      return html`<li>
+        ${this.cardEntities.length} card(s) from list
+        ${cardListEntity.attributes.friendly_name}
+      </li>`;
+    }
+    return html`<li>
+      <ha-alert alert-type="error">
+        <code>card_list_entity_id: ${this.cardListEntityId}</code> not found
+      </ha-alert>
+    </li>`;
+  }
   private renderEditModeTodoInfo() {
     if (!this.todoEntityId) return null;
     const todoEntity = this.hass?.states[this.todoEntityId];
     if (todoEntity) {
-      return `Will also show ${todoEntity.state} todo(s) from list ${todoEntity.attributes.friendly_name}`;
+      return html`<li>
+        ${todoEntity.state} todo(s) from list
+        ${todoEntity.attributes.friendly_name}
+      </li>`;
     }
-    return html`<ha-alert alert-type="error">
-      <code>todo_entity_id: ${this.todoEntityId}</code> not found
-    </ha-alert>`;
+    return html`<li>
+      <ha-alert alert-type="error">
+        <code>todo_entity_id: ${this.todoEntityId}</code> not found
+      </ha-alert>
+    </li>`;
   }
 
   private onTodoItemsChanged(e: CustomEvent<TodoItem[]>) {

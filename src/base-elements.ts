@@ -80,6 +80,7 @@ export class SimpleEntityBasedElement extends LitElement {
     for (const info of this.entityBindings) {
       const entityId = this.propertyEntityId(info);
       const state = this.hass.states[entityId];
+      if (!state) continue;
 
       // Ignore unchanged states so that the converter doesn't produce a false positive change
       // (eg, if it returns a new object every call).
