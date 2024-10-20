@@ -56,13 +56,21 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     if (changedProps.has("cardCount") && this.cardCount) this.isOpen = true;
   }
 
-  setConfig(config: Record<string, unknown>) {
-    this.reopenDelayMs = parseInt(config.reopen_delay_ms as string) ?? 0;
+  static getStubConfig(): CardConfig {
+    return {
+      card_list_entity_id: "sensor.popup_cards",
+      reopen_delay_ms: `${5 * 60_000}`,
+      todo_entity_id: "todo.your_list",
+    };
+  }
+
+  setConfig(config: CardConfig) {
+    this.reopenDelayMs = parseInt(config.reopen_delay_ms ?? "0") || 0;
     if (this.todoEntityId !== config.todo_entity_id) this.todoItems = [];
-    this.todoEntityId = config.todo_entity_id as string;
-    this.cardListEntityId = config.card_list_entity_id as string;
+    this.todoEntityId = config.todo_entity_id;
+    this.cardListEntityId = config.card_list_entity_id;
     this.browserIds = config.browser_ids
-      ? new Set(config.browser_ids as string[])
+      ? new Set(config.browser_ids)
       : undefined;
   }
   async connectedCallback() {
@@ -158,6 +166,13 @@ window.customCards.push({
   name: "Popup Card Runner",
   description: "Automatically opens a popup with active popup cards.",
 });
+
+interface CardConfig {
+  reopen_delay_ms?: string;
+  todo_entity_id?: string;
+  card_list_entity_id?: string;
+  browser_ids?: string[];
+}
 
 class ManualPopupCardsElement extends LitElement {
   @property({ attribute: false })
