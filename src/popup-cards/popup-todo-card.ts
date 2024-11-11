@@ -72,10 +72,15 @@ class PopupTodoCard extends LitElement {
     }
   }
 
-  markCompleted() {
-    updateItem(this.hass!, this.entityId!, {
+  async markCompleted() {
+    const updatedItem = {
       ...this.item!,
       status: TodoItemStatus.Completed,
+    };
+    await updateItem(this.hass!, this.entityId!, updatedItem);
+    await this.hass!.callApi("POST", `events/popup_todo_completed`, {
+      ...updatedItem,
+      entity_id: this.entityId,
     });
   }
 
