@@ -82,6 +82,19 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       > * {
         flex-grow: 1;
       }
+      mwc-button {
+        --mdc-theme-on-primary: var(--primary-text-color);
+        --mdc-theme-primary: var(
+          --ha-card-background,
+          var(--card-background-color, #fff)
+        );
+        --mdc-ripple-hover-opacity: var(--ha-ripple-hover-opacity, 0.08);
+        --mdc-ripple-pressed-opacity: var(--ha-ripple-pressed-opacity, 0.12);
+        --mdc-ripple-color: var(
+          --ha-ripple-pressed-color,
+          var(--ha-ripple-color, var(--secondary-text-color))
+        );
+      }
     }
 
     .MenuButtonIcon {
@@ -111,9 +124,9 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       <div class="Buttons">
         ${this.snoozeButtons.map(
           (b) =>
-            html`<ha-button @click=${() => this.snoozeTo(b.date)} raised>
+            html`<mwc-button @click=${() => this.snoozeTo(b.date)} raised>
               ${b.label}
-            </ha-button>`,
+            </mwc-button>`,
         )}
       </div>
     `;

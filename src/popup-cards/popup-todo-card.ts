@@ -23,7 +23,7 @@ class PopupTodoCard extends LitElement {
 
       background-color: var(--paper-item-icon-color);
 
-      color: #1c1c1c;
+      color: var(--primary-background-color);
       overflow: hidden;
 
       display: flex;
