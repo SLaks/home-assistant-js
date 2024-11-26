@@ -29,11 +29,16 @@ class PopupTodoCard extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 4%;
+      padding: 12px;
+      gap: 12px;
 
       font-size: 1.2rem;
       text-align: center;
       text-overflow: ellipsis;
+
+      .Name {
+        font-size: var(--popup-todo-card-name-font-size, 1.3rem);
+      }
 
       .Icon {
         flex-grow: 1;
@@ -55,7 +60,6 @@ class PopupTodoCard extends LitElement {
       popup-todo-snoozer {
         align-self: stretch;
         flex-shrink: 0;
-        margin-top: 4%;
       }
     }
   `;

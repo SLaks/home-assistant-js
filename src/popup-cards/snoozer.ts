@@ -57,8 +57,7 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
     :host {
       background: var(--primary-background-color);
       color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
-      margin: 12px 12px 8px;
-      border-radius: 16px 16px;
+      border-radius: 16px;
       padding: 4px 12px 12px;
       --mdc-theme-primary: var(--mdc-theme-surface);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
