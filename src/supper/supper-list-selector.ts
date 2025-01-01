@@ -102,6 +102,7 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
       flex-wrap: wrap;
       overflow-y: auto;
       justify-content: center;
+      color: white;
       padding: var(--layout-spacing) 0 0 var(--layout-spacing);
 
       background-color: var(--ha-card-background);
@@ -139,7 +140,7 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
           100% / var(--column-count) - (2 + var(--column-count)) *
             var(--layout-spacing)
         );
-        aspect-ratio: 1/1.618;
+        aspect-ratio: 1;
       }
 
       &.Disabled {
@@ -166,6 +167,15 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
         @media ${veryMobileMode} {
           flex-direction: column;
           text-align: center;
+          gap: 4px;
+          .Name {
+            display: inline;
+          }
+          .Actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
         }
 
         .Action {
@@ -208,10 +218,12 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
     >
       <div class="Caption">
         <div>
-          <div>${supper.name}</div>
+          <div class="Name">${supper.name}</div>
           ${this.renderSubcaption(supper)}
         </div>
-        <div>${supper.actions.map((a) => this.renderSupperAction(a))}</div>
+        <div class="Actions">
+          ${supper.actions.map((a) => this.renderSupperAction(a))}
+        </div>
       </div>
       <md-ripple></md-ripple>
     </div>`;
