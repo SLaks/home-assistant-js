@@ -145,6 +145,10 @@ class PopupCardListElement extends LitElement {
           width: 0;
           flex-grow: 0;
         }
+
+        > * {
+          display: block;
+        }
       }
     }
 

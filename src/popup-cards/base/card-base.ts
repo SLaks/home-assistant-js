@@ -1,0 +1,103 @@
+import { css, html, LitElement } from "lit";
+import { property } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+
+class PopupCardBase extends LitElement {
+  @property({ type: Boolean, attribute: "is-completed" })
+  isCompleted = false;
+
+  static styles = css`
+    .Card {
+      height: 300px;
+      max-width: 400px;
+
+      background-color: var(
+        --popup-card-background-color,
+        var(--paper-item-icon-color)
+      );
+
+      color: var(--popup-card-text-color, var(--primary-background-color));
+      overflow: hidden;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      gap: 12px;
+
+      font-size: 1.2rem;
+      text-align: center;
+      text-overflow: ellipsis;
+
+      .Name {
+        font-size: var(--popup-card-name-font-size, 1.3rem);
+      }
+
+      .Icon {
+        flex-grow: 1;
+        align-self: stretch;
+        display: flex;
+        place-content: center;
+        min-height: 0;
+
+        svg {
+          width: 80%;
+        }
+      }
+
+      &.isCompleted {
+        background-color: #388e3c;
+        color: white;
+      }
+
+      .Actions {
+        align-self: stretch;
+        flex-shrink: 0;
+        background: var(--primary-background-color);
+        color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
+        border-radius: 16px;
+        padding: 4px 12px 12px;
+        --mdc-theme-primary: var(--mdc-theme-surface);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        display: flex;
+
+        // Make mwc-button look consistent:
+        --mdc-theme-on-primary: var(--primary-text-color);
+        --mdc-theme-primary: var(
+          --ha-card-background,
+          var(--card-background-color, #fff)
+        );
+        --mdc-ripple-hover-opacity: var(--ha-ripple-hover-opacity, 0.08);
+        --mdc-ripple-pressed-opacity: var(--ha-ripple-pressed-opacity, 0.12);
+        --mdc-ripple-color: var(
+          --ha-ripple-pressed-color,
+          var(--ha-ripple-color, var(--secondary-text-color))
+        );
+      }
+    }
+  `;
+
+  protected override render(): unknown {
+    return html`
+      <ha-card class=${classMap({ isCompleted: this.isCompleted, Card: true })}>
+        <div class="Icon">
+          <slot name="icon"></slot>
+        </div>
+        <div class="Name">
+          <slot name="name"></slot>
+        </div>
+        <md-ripple></md-ripple>
+        <div
+          class="Actions"
+          @keydown=${(e: Event) => e.stopPropagation()}
+          @closed=${(e: Event) => e.stopPropagation()}
+          @pointerdown=${(e: Event) => e.stopPropagation()}
+          @click=${(e: Event) => e.stopPropagation()}
+        >
+          <slot name="actions"></slot>
+        </div>
+      </ha-card>
+    `;
+  }
+}
+customElements.define("popup-card-base", PopupCardBase);
