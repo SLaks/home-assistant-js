@@ -62,6 +62,7 @@ class PopupTodoSnoozerElement extends SimpleEntityBasedElement {
       font-family: var(--mdc-typography-font-family, Roboto, sans-serif);
       font-size: var(--mdc-typography-button-font-size, 0.875rem);
       margin-left: 18px;
+      margin-top: -8px;
     }
 
     .Buttons {

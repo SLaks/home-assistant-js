@@ -6,6 +6,9 @@ class PopupCardBase extends LitElement {
   @property({ type: Boolean, attribute: "is-completed" })
   isCompleted = false;
 
+  @property({ type: Boolean, attribute: "not-clickable" })
+  notClickable = false;
+
   static styles = css`
     .Card {
       height: 300px;
@@ -51,7 +54,7 @@ class PopupCardBase extends LitElement {
         background: var(--primary-background-color);
         color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
         border-radius: 16px;
-        padding: 4px 12px 12px;
+        padding: 12px;
         --mdc-theme-primary: var(--mdc-theme-surface);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
         display: flex;
@@ -81,7 +84,7 @@ class PopupCardBase extends LitElement {
         <div class="Name">
           <slot name="name"></slot>
         </div>
-        <md-ripple></md-ripple>
+        ${this.notClickable ? null : html`<md-ripple></md-ripple>`}
         <div
           class="Actions"
           @keydown=${(e: Event) => e.stopPropagation()}
