@@ -1,4 +1,5 @@
 import "../base/card-base";
+import "../base/emoji-icon";
 import "./snoozer";
 import { html, LitElement, PropertyValues } from "lit";
 import { TodoDetails } from "./due-times";
@@ -13,8 +14,6 @@ class PopupTodoCard extends LitElement {
   @property({ attribute: false }) entityId?: string;
   @property({ attribute: false }) item?: TodoItem;
   @state() private details: TodoDetails = {};
-  @state() private emoji = defaultEmoji;
-  @state() private emojiSize = getGraphemeCount(this.emoji);
 
   protected override willUpdate(changedProps: PropertyValues<this>): void {
     if (changedProps.has("item")) {
@@ -23,8 +22,6 @@ class PopupTodoCard extends LitElement {
       } catch {
         this.details = {};
       }
-      this.emoji = this.details.emoji ?? defaultEmoji;
-      this.emojiSize = getGraphemeCount(this.emoji);
     }
   }
 
@@ -47,9 +44,10 @@ class PopupTodoCard extends LitElement {
         ?is-completed=${this.item.status === TodoItemStatus.Completed}
         @click=${this.markCompleted}
       >
-        <svg slot="icon" viewBox="0 0 ${this.emojiSize * 24} 18">
-          <text x="0" y="15">${this.emoji}</text>
-        </svg>
+        <popup-emoji-icon
+          slot="icon"
+          emoji=${this.details.emoji ?? defaultEmoji}
+        ></popup-emoji-icon>
         <div slot="name">${this.item.summary}</div>
         <popup-todo-snoozer
           slot="actions"
@@ -62,9 +60,3 @@ class PopupTodoCard extends LitElement {
   }
 }
 customElements.define("popup-todo-card", PopupTodoCard);
-function getGraphemeCount(str: string) {
-  const segmenter = new Intl.Segmenter("en-US", { granularity: "grapheme" });
-  // The Segments object iterator that is used here iterates over characters in grapheme clusters,
-  // which may consist of multiple Unicode characters
-  return [...segmenter.segment(str)].length;
-}

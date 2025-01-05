@@ -35,14 +35,9 @@ class PopupCardBase extends LitElement {
 
       .Icon {
         flex-grow: 1;
-        align-self: stretch;
         display: flex;
         place-content: center;
         min-height: 0;
-
-        svg {
-          width: 80%;
-        }
       }
 
       &.isCompleted {
