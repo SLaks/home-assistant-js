@@ -1,4 +1,4 @@
-import "./popup-todo-card";
+import "./todo-cards/popup-todo-card";
 import {
   HomeAssistant,
   LovelaceCard,
@@ -9,7 +9,7 @@ import {
 import { css, html, LitElement, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { CardHelpers } from "../types";
-import { shouldShowTodoCard } from "./due-times";
+import { shouldShowTodoCard } from "./todo-cards/due-times";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { TodoItem } from "../todos/ha-api";

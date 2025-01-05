@@ -4,7 +4,7 @@ import { TodoDetails } from "./due-times";
 import { property, state } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { classMap } from "lit/directives/class-map.js";
-import { TodoItem, updateItem, TodoItemStatus } from "../todos/ha-api";
+import { TodoItem, updateItem, TodoItemStatus } from "../../todos/ha-api";
 
 const defaultEmoji = "☑️";
 

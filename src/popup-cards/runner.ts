@@ -4,7 +4,7 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements.ts";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
-import { shouldShowTodoCard } from "./due-times.ts";
+import { shouldShowTodoCard } from "./todo-cards/due-times.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { CARD_HEIGHT } from "./card-list.ts";
 import { TodoItem } from "../todos/ha-api.ts";

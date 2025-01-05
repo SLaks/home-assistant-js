@@ -5,11 +5,11 @@ import {
   bindEntity,
   SimpleEntityBasedElement,
   stateToBool,
-} from "../base-elements";
+} from "../../base-elements";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import { css, html, PropertyValues } from "lit";
-import { TodoItem } from "../todos/ha-api";
+import { TodoItem } from "../../todos/ha-api";
 
 interface SnoozeOption {
   label: string;

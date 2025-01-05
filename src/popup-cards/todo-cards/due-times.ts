@@ -5,7 +5,7 @@ import {
   supportsFeature,
   TodoListEntityFeature,
   updateItem,
-} from "../todos/ha-api";
+} from "../../todos/ha-api";
 
 /** JSON that we store in the `description` field to save additional data. */
 export interface TodoDetails {
@@ -32,7 +32,9 @@ export function computeDueTimestamp(item: TodoItem): Date | null {
     // Ignore invalid JSON
   }
   // Parse the date, but add the current timezone offset so we don't interpret it in UTC
-  return new Date(+new Date(item.due) + new Date().getTimezoneOffset() * 60_000);
+  return new Date(
+    +new Date(item.due) + new Date().getTimezoneOffset() * 60_000,
+  );
 }
 
 /**
