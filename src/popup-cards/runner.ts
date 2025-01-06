@@ -8,6 +8,7 @@ import { shouldShowTodoCard } from "./todo-cards/due-times.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { CARD_HEIGHT } from "./card-list.ts";
 import { TodoItem } from "../todos/ha-api.ts";
+import { waitUntilNoHaDialogs } from "../helpers/dialogs.ts";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
@@ -53,7 +54,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     // If this runs every time, isOpen will be stuck as
     // true before the dialog finishes closing, and the
     // dialog will never reopen.
-    if (changedProps.has("cardCount") && this.cardCount) this.isOpen = true;
+    if (changedProps.has("cardCount")) this.tryOpen();
   }
 
   static getStubConfig(): CardConfig {
@@ -176,9 +177,15 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   onClosed() {
     this.isOpen = false;
     if (!this.reopenDelayMs || !this.cardCount) return;
-    setTimeout(() => {
-      if (this.cardCount) this.isOpen = true;
-    }, this.reopenDelayMs);
+    setTimeout(() => this.tryOpen(), this.reopenDelayMs);
+  }
+
+  private async tryOpen() {
+    if (!this.cardCount) return;
+    await waitUntilNoHaDialogs();
+    // We may get here multiple times concurrently.  This is fine.
+    if (!this.cardCount) return;
+    this.isOpen = true;
   }
 }
 customElements.define("popup-card-runner", PopupCardRunnerElement);
