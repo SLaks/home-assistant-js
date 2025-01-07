@@ -65,13 +65,22 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     };
   }
 
-  setConfig(config: CardConfig) {
+  setConfig(fullConfig: CardConfig) {
+    const browserConfig = fullConfig.browser_ids?.find(
+      (b): b is CardBrowserSpec =>
+        typeof b === "object" && b.browser_id === window.browser_mod?.browserID,
+    );
+    const config = { ...fullConfig, ...(browserConfig ?? {}) };
     this.reopenDelayMs = parseInt(config.reopen_delay_ms ?? "0") || 0;
     if (this.todoEntityId !== config.todo_entity_id) this.todoItems = [];
     this.todoEntityId = config.todo_entity_id;
     this.cardListEntityId = config.card_list_entity_id;
     this.browserIds = config.browser_ids
-      ? new Set(config.browser_ids)
+      ? new Set(
+          config.browser_ids.map((b) =>
+            typeof b === "string" ? b : b.browser_id,
+          ),
+        )
       : undefined;
   }
   async connectedCallback() {
@@ -196,11 +205,16 @@ window.customCards.push({
   description: "Automatically opens a popup with active popup cards.",
 });
 
-interface CardConfig {
+interface CardBehaviorOptions {
   reopen_delay_ms?: string;
   todo_entity_id?: string;
   card_list_entity_id?: string;
-  browser_ids?: string[];
+}
+interface CardBrowserSpec extends CardBehaviorOptions {
+  browser_id: string;
+}
+interface CardConfig extends CardBehaviorOptions {
+  browser_ids?: Array<string | CardBrowserSpec>;
 }
 
 class ManualPopupCardsElement extends LitElement {
