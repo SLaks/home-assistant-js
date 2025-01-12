@@ -117,38 +117,40 @@ class PopupCardListElement extends LitElement {
 
       margin-left: -${CARD_SPACING}px;
       margin-top: -${CARD_SPACING}px;
-      > div {
-        /* This is animated to 0 for hidden cards */
-        margin-left: ${CARD_SPACING}px;
-        margin-top: ${CARD_SPACING}px;
+    }
+
+    .CardWrapper,
+    .ErrorCard {
+      /* This is animated to 0 for hidden cards */
+      margin-left: ${CARD_SPACING}px;
+      margin-top: ${CARD_SPACING}px;
+    }
+
+    .CardWrapper {
+      /* 
+       * Use flex-grow to make rows with fewer items grow past the fixed width.
+       * Use max-width to prevent them from growing wider than the contained card.
+       */
+      flex-grow: 1;
+      width: var(--popup-card-width);
+      max-width: ${BASE_CARD_WIDTH}px;
+      min-width: 0;
+      overflow: hidden;
+      animation: show-card var(--transition-duration) var(--transition-func)
+        forwards;
+      animation-fill-mode: none;
+      transition-duration: var(--transition-duration);
+      transition-timing-function: var(--transition-func);
+      transition-property: flex-basis, margin-left, width;
+      &.isHidden {
+        margin-left: 0;
+        min-width: 0;
+        width: 0;
+        flex-grow: 0;
       }
 
-      .CardWrapper {
-        /* 
-         * Use flex-grow to make rows with fewer items grow past the fixed width.
-         * Use max-width to prevent them from growing wider than the contained card.
-         */
-        flex-grow: 1;
-        width: var(--popup-card-width);
-        max-width: ${BASE_CARD_WIDTH}px;
-        min-width: 0;
-        overflow: hidden;
-        animation: show-card var(--transition-duration) var(--transition-func)
-          forwards;
-        animation-fill-mode: none;
-        transition-duration: var(--transition-duration);
-        transition-timing-function: var(--transition-func);
-        transition-property: flex-basis, margin-left, width;
-        &.isHidden {
-          margin-left: 0;
-          min-width: 0;
-          width: 0;
-          flex-grow: 0;
-        }
-
-        > * {
-          display: block;
-        }
+      > * {
+        display: block;
       }
     }
 
