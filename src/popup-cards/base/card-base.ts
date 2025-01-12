@@ -57,7 +57,6 @@ class PopupCardBase extends LitElement {
         padding: 12px;
         --mdc-theme-primary: var(--mdc-theme-surface);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-        display: flex;
 
         /* Make mwc-button look consistent: */
         --mdc-theme-on-primary: var(--primary-text-color);
