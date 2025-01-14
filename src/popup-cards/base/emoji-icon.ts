@@ -26,7 +26,7 @@ class EmojiIcon extends LitElement {
     if (!this.emoji) return null;
 
     return html`
-      <svg slot="icon" viewBox="0 0 ${this.emojiSize * 24} 18">
+      <svg viewBox="0 0 ${this.emojiSize * 24} 18">
         <text x="0" y="15">${this.emoji}</text>
       </svg>
     `;

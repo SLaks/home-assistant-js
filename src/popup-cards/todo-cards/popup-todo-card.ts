@@ -1,29 +1,16 @@
 import "../base/card-base";
 import "../base/emoji-icon";
 import "./snoozer";
-import { html, LitElement, PropertyValues } from "lit";
-import { TodoDetails } from "./due-times";
-import { property, state } from "lit/decorators.js";
+import { html, LitElement } from "lit";
+import { property } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { TodoItem, updateItem, TodoItemStatus } from "../../todos/ha-api";
-
-const defaultEmoji = "☑️";
+import "./todo-icon";
 
 class PopupTodoCard extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) entityId?: string;
   @property({ attribute: false }) item?: TodoItem;
-  @state() private details: TodoDetails = {};
-
-  protected override willUpdate(changedProps: PropertyValues<this>): void {
-    if (changedProps.has("item")) {
-      try {
-        this.details = JSON.parse(this.item?.description ?? "{}") ?? {};
-      } catch {
-        this.details = {};
-      }
-    }
-  }
 
   async markCompleted() {
     const updatedItem = {
@@ -44,10 +31,7 @@ class PopupTodoCard extends LitElement {
         ?is-completed=${this.item.status === TodoItemStatus.Completed}
         @click=${this.markCompleted}
       >
-        <popup-emoji-icon
-          slot="icon"
-          emoji=${this.details.emoji ?? defaultEmoji}
-        ></popup-emoji-icon>
+        <popup-todo-icon slot="icon" .item=${this.item}></popup-todo-icon>
         <div slot="name">${this.item.summary}</div>
         <popup-todo-snoozer
           slot="actions"
