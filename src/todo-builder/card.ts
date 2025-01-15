@@ -9,6 +9,7 @@ import {
   DateOption,
   TodoTargetDetails,
 } from "../popup-cards/todo-cards/target-days";
+import "./builder-ui";
 
 class TodoBuilderCardElement extends SimpleEntityBasedElement {
   @state()
@@ -29,9 +30,9 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
 
   static getStubConfig(): CardConfig {
     return {
-      target_list: "sensor.my_tasks",
-      long_term_list: "sensor.long_term_tasks",
-      template_list: "sensor.common_tasks",
+      target_list: "todo.my_tasks",
+      long_term_list: "todo.long_term_tasks",
+      template_list: "todo.common_tasks",
     };
   }
 
@@ -45,6 +46,12 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
     if (!this.hass) return html`Loading...`;
 
     return html`
+      <todo-builder
+        .targetList=${this.targetList || []}
+        .templateList=${this.templateList || []}
+        .longTermList=${this.longTermList || []}
+        .targetDays=${this.targetDays || []}
+      ></todo-builder>
       <todo-target-days
         .hass=${this.hass}
         @target-days-updated=${(e: CustomEvent<TodoTargetDetails>) =>
