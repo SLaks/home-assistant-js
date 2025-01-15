@@ -100,8 +100,8 @@ class ToboBuilderElement extends LitElement {
     }
 
     .TodoList {
-      padding: 8px;
-      gap: 8px;
+      padding: 12px;
+      gap: 12px;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       grid-template-rows: 1fr;
