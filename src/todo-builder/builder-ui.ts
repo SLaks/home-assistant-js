@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import "./todo-thumbnail-card";
 import { classMap } from "lit/directives/class-map.js";
 
-const SORT_OPTIONS = { sort: false, delay: 500, delayOnTouchOnly: true };
+const SORT_OPTIONS = { sort: false };
 
 class ToboBuilderElement extends LitElement {
   @property({ attribute: false, type: Array })
@@ -51,7 +51,7 @@ class ToboBuilderElement extends LitElement {
       display: grid;
       grid-template-areas: "Templates LongTerm" "Days Days";
       grid-template-columns: 1fr min-content;
-      grid-template-rows: 2fr 3fr;
+      grid-template-rows: min-content 3fr;
       padding: 8px;
 
       /* Restore card styling overridden for panel views. */
@@ -105,25 +105,18 @@ class ToboBuilderElement extends LitElement {
     }
   `;
 
-  private onTemplateDragEnd(e: Event) {
-    const source = e.target as HTMLElement;
-    for (let c = source.lastElementChild; c; c = c.previousElementSibling) {
-      // if (!c.item) c.remove();
-    }
-  }
-
   override render() {
     return html`
       <ha-sortable
         .options=${SORT_OPTIONS}
         .group=${{ name: "builder-todos", pull: "clone", put: false }}
-        rollback
-        @drag-end=${this.onTemplateDragEnd}
+        ?rollback=${false}
       >
         <div class="Templates TodoList">
           ${this.templateList.map(
             (item) =>
-              html`<todo-thumbnail-card .item=${item}></todo-thumbnail-card>`,
+              html`<todo-thumbnail-card item-json=${JSON.stringify(item)}>
+              </todo-thumbnail-card>`,
           )}
         </div>
       </ha-sortable>
@@ -142,7 +135,9 @@ class ToboBuilderElement extends LitElement {
                 <div class="DayItems TodoList">
                   ${items.map(
                     (item) =>
-                      html`<todo-thumbnail-card .item=${item}>
+                      html`<todo-thumbnail-card
+                        item-json=${JSON.stringify(item)}
+                      >
                       </todo-thumbnail-card>`,
                   )}
                   ${items.length === 0

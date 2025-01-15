@@ -1,10 +1,22 @@
-import { css, html, LitElement } from "lit";
-import { property } from "lit/decorators.js";
+import { css, html, LitElement, PropertyValues } from "lit";
+import { property, state } from "lit/decorators.js";
 import { TodoItem } from "../todos/ha-api";
 import "../popup-cards/todo-cards/todo-icon";
 
 class TodoThumbnailCard extends LitElement {
-  @property({ attribute: false }) item?: TodoItem;
+  // This element is dragged, so it must render entirely from attributes.
+  // If it uses properties, Sortable's drag clones won't set the properties.
+  @property({ attribute: "item-json" })
+  itemJson?: string;
+
+  @state()
+  item?: TodoItem;
+
+  protected override willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has("itemJson")) {
+      this.item = this.itemJson && JSON.parse(this.itemJson);
+    }
+  }
 
   static styles = css`
     :host {
