@@ -19,31 +19,50 @@ class ToboBuilderElement extends LitElement {
   targetDays: readonly DateOption[] = [];
 
   @state()
-  dayGroups: Map<string | DateOption, TodoItem[]> = new Map();
+  dayGroups: Map<DateOption, TodoItem[]> = new Map();
 
-  protected override willUpdate(changedProperties: PropertyValues): void {
-    if (changedProperties.has("targetList") && this.targetDays.length) {
-      const weekStart = dayjs().startOf("week");
-      const firstOption = dayjs(this.targetDays[0].date);
-      this.dayGroups = new Map([
-        ...Map.groupBy(
-          this.targetList.filter(
-            (item) =>
-              weekStart.isBefore(item.due) && firstOption.isAfter(item.due),
-          ),
-          (item): string | DateOption => dayjs(item.due).format("Last dddd"),
-        ),
-        ...this.targetDays.map(
-          (option) =>
-            [
-              option,
-              this.targetList.filter((item) =>
-                dayjs(item.due).isSame(option.date, "day"),
-              ),
-            ] as const,
-        ),
-      ]);
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (!this.targetDays.length) return;
+    this.dayGroups = this.groupItems();
+  }
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    if (
+      changedProperties.has("targetList") ||
+      changedProperties.has("targetDays")
+    ) {
+      if (!this.targetDays.length) return;
+      this.dayGroups = this.groupItems();
     }
+  }
+  private groupItems() {
+    const allDays: DateOption[] = [];
+    // Add past days before the first snooze option.
+    for (
+      let day = dayjs().startOf("week");
+      !day.isSame(this.targetDays[0].date, "day");
+      day = day.add(1, "day")
+    ) {
+      allDays.push({
+        date: day.toDate(),
+        label: day.isSame(new Date(), "day") ? "Today" : day.format("dddd"),
+      });
+    }
+    // Add snooze options in this week only
+    const lastDay = dayjs().endOf("week");
+    allDays.push(...this.targetDays.filter((o) => lastDay.isAfter(o.date)));
+    return new Map(
+      allDays.map((option) => [
+        option,
+        this.targetList.filter(
+          (item) =>
+            // Ignore completed items with no date.
+            (item.status === "needs_action" || item.due) &&
+            // If the item was never snoozed, show it today.
+            dayjs(item.due || new Date()).isSame(option.date, "day"),
+        ),
+      ]),
+    );
   }
 
   static styles = css`
@@ -72,6 +91,9 @@ class ToboBuilderElement extends LitElement {
       justify-content: stretch;
       align-items: stretch;
       gap: 12px;
+      h3 {
+        text-align: center;
+      }
       .Day {
         flex-grow: 1;
       }
@@ -108,11 +130,12 @@ class ToboBuilderElement extends LitElement {
   override render() {
     return html`
       <ha-sortable
+        class="Templates"
         .options=${SORT_OPTIONS}
         .group=${{ name: "builder-todos", pull: "clone", put: false }}
         ?rollback=${false}
       >
-        <div class="Templates TodoList">
+        <div class="TodoList">
           ${this.templateList.map(
             (item) =>
               html`<todo-thumbnail-card item-json=${JSON.stringify(item)}>
@@ -127,11 +150,14 @@ class ToboBuilderElement extends LitElement {
             <div
               class=${classMap({
                 Day: true,
-                Inactive: typeof key === "string",
               })}
             >
-              <h3>${typeof key === "string" ? key : key.label}</h3>
-              <ha-sortable .options=${SORT_OPTIONS} group="builder-todos">
+              <h3>${key.label}</h3>
+              <ha-sortable
+                .options=${SORT_OPTIONS}
+                draggable-selector="todo-thumbnail-card"
+                group="builder-todos"
+              >
                 <div class="DayItems TodoList">
                   ${items.map(
                     (item) =>
