@@ -11,6 +11,10 @@ class TodoThumbnailCard extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      aspect-ratio: 1.618;
+      place-self: stretch;
 
       background: var(--primary-background-color);
       color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
@@ -20,12 +24,12 @@ class TodoThumbnailCard extends LitElement {
     }
     popup-todo-icon {
       flex-grow: 1;
-      width: 128px;
     }
     .Name {
       flex-shrink: 0;
       text-overflow: ellipsis;
       overflow: hidden;
+      text-align: center;
     }
   `;
 

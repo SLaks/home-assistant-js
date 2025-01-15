@@ -4,8 +4,9 @@ import { TodoItem } from "../todos/ha-api";
 import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
 import "./todo-thumbnail-card";
+import { classMap } from "lit/directives/class-map.js";
 
-class ToboBUilderElement extends LitElement {
+class ToboBuilderElement extends LitElement {
   @property({ attribute: false, type: Array })
   targetList: readonly TodoItem[] = [];
   @property({ attribute: false, type: Array })
@@ -46,28 +47,56 @@ class ToboBUilderElement extends LitElement {
   static styles = css`
     :host {
       display: grid;
-      grid-template-areas: "'Templates LongTerm' 'Days'";
+      grid-template-areas: "Templates LongTerm" "Days Days";
       grid-template-columns: 1fr min-content;
       grid-template-rows: 2fr 3fr;
+      padding: 8px;
+
+      /* Restore card styling overridden for panel views. */
+      --ha-card-border-radius: var(--restore-card-border-radius, 12px);
+      --ha-card-border-width: var(--restore-card-border-width, 1px);
+      --ha-card-box-shadow: var(--restore-card-box-shadow, none);
     }
 
     .Templates {
-      grid-area: "Templates";
+      grid-area: Templates;
     }
     .LongTerm {
-      grid-area: "LongTerm";
+      grid-area: LongTerm;
     }
     .Days {
-      grid-area: "Days";
+      grid-area: Days;
       display: flex;
       justify-content: stretch;
       align-items: stretch;
+      gap: 12px;
+      .Day {
+        flex-grow: 1;
+      }
     }
 
     .TodoList {
-      display: flex;
-      flex-wrap: wrap;
+      padding: 8px;
       gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      grid-template-rows: 1fr;
+      overflow: hidden;
+
+      background: var(--ha-card-background, var(--card-background-color, #fff));
+      backdrop-filter: var(--ha-card-backdrop-filter, none);
+      box-shadow: var(--ha-card-box-shadow, none);
+      border-radius: var(--ha-card-border-radius, 12px);
+      border-width: var(--ha-card-border-width, 1px);
+      border-style: solid;
+      border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+      color: var(--primary-text-color);
+    }
+
+    .EmptyMessage {
+      text-align: center;
+      font-style: italic;
+      padding: 16px;
     }
   `;
 
@@ -83,7 +112,12 @@ class ToboBUilderElement extends LitElement {
       <div class="Days">
         ${[...this.dayGroups].map(
           ([key, items]) => html`
-            <div class="Day">
+            <div
+              class=${classMap({
+                Day: true,
+                Inactive: typeof key === "string",
+              })}
+            >
               <h3>${typeof key === "string" ? key : key.label}</h3>
               <div class="DayItems TodoList">
                 ${items.map(
@@ -91,6 +125,9 @@ class ToboBUilderElement extends LitElement {
                     html`<todo-thumbnail-card .item=${item}>
                     </todo-thumbnail-card>`,
                 )}
+                ${items.length === 0
+                  ? html`<div class="EmptyMessage">Drop todos here</div>`
+                  : null}
               </div>
             </div>
           `,
@@ -100,4 +137,4 @@ class ToboBUilderElement extends LitElement {
   }
 }
 
-customElements.define("todo-builder", ToboBUilderElement);
+customElements.define("todo-builder", ToboBuilderElement);
