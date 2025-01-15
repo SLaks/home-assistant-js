@@ -3,6 +3,10 @@ import { LitElement, PropertyValues } from "lit";
 import { property } from "lit/decorators.js";
 import { subscribeItems, TodoItem } from "./ha-api";
 
+export interface TodoItemWithEntity extends TodoItem {
+  entityId: string;
+}
+
 class TodoItemsSubscriber extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
 
@@ -38,8 +42,11 @@ class TodoItemsSubscriber extends LitElement {
       this.entityId,
       (update) => {
         this.dispatchEvent(
-          new CustomEvent<TodoItem[]>("items-updated", {
-            detail: update.items,
+          new CustomEvent<TodoItemWithEntity[]>("items-updated", {
+            detail: update.items.map((item) => ({
+              ...item,
+              entityId: this.entityId!,
+            })),
           }),
         );
       },

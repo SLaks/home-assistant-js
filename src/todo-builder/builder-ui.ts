@@ -12,16 +12,16 @@ const SORT_OPTIONS = { sort: false };
 
 class ToboBuilderElement extends LitElement {
   @property({ attribute: false, type: Array })
-  targetList: readonly TodoItem[] = [];
+  targetList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
-  templateList: readonly TodoItem[] = [];
+  templateList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
-  longTermList: readonly TodoItem[] = [];
+  longTermList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
   targetDays: readonly DateOption[] = [];
 
   @state()
-  dayGroups: Map<DateOption, TodoItem[]> = new Map();
+  dayGroups: Map<DateOption, TodoItemWithEntity[]> = new Map();
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -161,7 +161,7 @@ class ToboBuilderElement extends LitElement {
     className,
     group = "builder-todos",
   }: {
-    items: readonly TodoItem[];
+    items: readonly TodoItemWithEntity[];
     emptyMessage: string;
     className?: string;
     group?: string | object;

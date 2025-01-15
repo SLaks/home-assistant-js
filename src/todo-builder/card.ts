@@ -3,13 +3,13 @@ import "../todos/subscriber";
 import { state } from "lit/decorators.js";
 import { SimpleEntityBasedElement } from "../base-elements";
 import { html } from "lit";
-import { TodoItem } from "../todos/ha-api";
 import { ifDefined } from "lit/directives/if-defined.js";
 import {
   DateOption,
   TodoTargetDetails,
 } from "../popup-cards/todo-cards/target-days";
 import "./builder-ui";
+import { TodoItemWithEntity } from "../todos/subscriber";
 
 class TodoBuilderCardElement extends SimpleEntityBasedElement {
   @state()
@@ -20,11 +20,11 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   templateListId?: string;
 
   @state()
-  targetList?: TodoItem[];
+  targetList?: TodoItemWithEntity[];
   @state()
-  templateList?: TodoItem[];
+  templateList?: TodoItemWithEntity[];
   @state()
-  longTermList?: TodoItem[];
+  longTermList?: TodoItemWithEntity[];
   @state()
   targetDays?: DateOption[];
 
@@ -60,19 +60,19 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
       <todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.targetListId)}
-        @items-updated=${(e: CustomEvent<TodoItem[]>) =>
+        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
           (this.targetList = e.detail)}
       ></todo-items-subscriber>
       <todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.longTermListId)}
-        @items-updated=${(e: CustomEvent<TodoItem[]>) =>
+        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
           (this.longTermList = e.detail)}
       ></todo-items-subscriber>
       <todo-items-subscriber
         .hass=${this.hass}
         entity-id=${ifDefined(this.templateListId)}
-        @items-updated=${(e: CustomEvent<TodoItem[]>) =>
+        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
           (this.templateList = e.detail)}
       ></todo-items-subscriber>
     `;

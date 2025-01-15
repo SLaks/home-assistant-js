@@ -3,13 +3,12 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
 import { setDueTimestamp } from "./due-times";
 import { css, html, LitElement } from "lit";
-import { TodoItem } from "../../todos/ha-api";
 import { DateOption, TodoTargetDetails } from "./target-days";
+import { TodoItemWithEntity } from "../../todos/subscriber";
 
 class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
-  @property({ attribute: false }) entityId?: string;
-  @property({ attribute: false }) item?: TodoItem;
+  @property({ attribute: false }) item?: TodoItemWithEntity;
 
   @state()
   snoozeButtons: DateOption[] = [];
@@ -86,7 +85,7 @@ class PopupTodoSnoozerElement extends LitElement {
     this.snoozeTo(this.snoozeMenu[e.detail.index].date);
   }
   private snoozeTo(date: Date) {
-    setDueTimestamp(this.hass!, this.entityId!, this.item!, date);
+    setDueTimestamp(this.hass!, this.item!, date);
   }
 }
 

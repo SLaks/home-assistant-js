@@ -7,8 +7,8 @@ import { property, state } from "lit/decorators.js";
 import { shouldShowTodoCard } from "./todo-cards/due-times.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { CARD_HEIGHT } from "./card-list.ts";
-import { TodoItem } from "../todos/ha-api.ts";
 import { waitUntilNoHaDialogs } from "../helpers/dialogs.ts";
+import { TodoItemWithEntity } from "../todos/subscriber.ts";
 
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
@@ -34,7 +34,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   private isOpen = false;
 
   @state()
-  todoItems: TodoItem[] = [];
+  todoItems: TodoItemWithEntity[] = [];
 
   @state()
   cardCount = 0;
@@ -114,7 +114,6 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     const content = html`<popup-card-list
       .cardEntities=${this.cardEntities}
       .hass=${this.hass}
-      .todoEntityId=${this.todoEntityId}
       .todoItems=${this.todoItems}
       .cardCount=${this.cardCount}
       @card-transitioned=${this.onCardHidden}
@@ -173,7 +172,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     </li>`;
   }
 
-  private onTodoItemsChanged(e: CustomEvent<TodoItem[]>) {
+  private onTodoItemsChanged(e: CustomEvent<TodoItemWithEntity[]>) {
     // We filter the items in card-list.ts, so that it can update completed items
     // as they animate away.
     this.todoItems = e.detail;

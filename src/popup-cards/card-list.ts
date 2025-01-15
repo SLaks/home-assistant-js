@@ -12,7 +12,7 @@ import { CardHelpers } from "../types";
 import { shouldShowTodoCard } from "./todo-cards/due-times";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
-import { TodoItem } from "../todos/ha-api";
+import { TodoItemWithEntity } from "../todos/subscriber";
 
 /** The default width of all cards (before flex-shrink). */
 const BASE_CARD_WIDTH = 400;
@@ -30,10 +30,8 @@ class PopupCardListElement extends LitElement {
 
   @property({ attribute: "card-entities", type: Array })
   cardEntities: string[] = [];
-  @property({ attribute: "todo-entity-id" })
-  todoEntityId?: string;
   @property({ attribute: false, type: Array })
-  todoItems: TodoItem[] = [];
+  todoItems: TodoItemWithEntity[] = [];
 
   /** The number of visible cards, as filtered by the caller. */
   @property({ attribute: false })
@@ -51,7 +49,7 @@ class PopupCardListElement extends LitElement {
   /** Maps entity IDs to card elements, including no-longer-shown cards. */
   private readonly cardMap = new Map<string, LovelaceCard>();
   /** Maps TODO uids to item objects, including just-completed items. */
-  private readonly todoMap = new Map<string, TodoItem>();
+  private readonly todoMap = new Map<string, TodoItemWithEntity>();
   constructor() {
     super();
     window.loadCardHelpers().then((h) => (this.helpers = h));
@@ -196,11 +194,7 @@ class PopupCardListElement extends LitElement {
             class="CardWrapper ${classMap({ isHidden })}"
             @transitionend=${this.onCardTransitionEnd}
           >
-            <popup-todo-card
-              .entityId=${this.todoEntityId!}
-              .hass=${this.hass}
-              .item=${item}
-            ></popup-todo-card>
+            <popup-todo-card .hass=${this.hass} .item=${item}></popup-todo-card>
           </div>`;
         },
       )}

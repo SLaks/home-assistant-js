@@ -6,6 +6,7 @@ import {
   TodoListEntityFeature,
   updateItem,
 } from "../../todos/ha-api";
+import { TodoItemWithEntity } from "../../todos/subscriber";
 
 /** JSON that we store in the `description` field to save additional data. */
 export interface TodoDetails {
@@ -44,20 +45,19 @@ export function computeDueTimestamp(item: TodoItem): Date | null {
  */
 export function setDueTimestamp(
   hass: HomeAssistant,
-  entityId: string,
-  item: TodoItem,
+  item: TodoItemWithEntity,
   due: Date,
 ) {
   if (
     supportsFeature(
-      hass.states[entityId],
+      hass.states[item.entityId],
       TodoListEntityFeature.SET_DUE_DATETIME_ON_ITEM,
     )
   ) {
-    return updateItem(hass, entityId, { ...item, due: due.toISOString() });
+    return updateItem(hass, item.entityId, { ...item, due: due.toISOString() });
   } else {
     const [date] = due.toISOString().split("T");
-    return updateItem(hass, entityId, {
+    return updateItem(hass, item.entityId, {
       ...item,
       due: date,
       description: JSON.stringify({
