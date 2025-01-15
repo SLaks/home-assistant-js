@@ -6,6 +6,10 @@ class EmojiIcon extends LitElement {
 
   @state() private emojiCount = 0;
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (this.emoji) this.emojiCount = getGraphemeCount(this.emoji);
+  }
   protected override willUpdate(changedProps: PropertyValues<this>): void {
     if (!this.emoji) return;
 

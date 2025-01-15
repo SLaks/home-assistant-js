@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 import "./todo-thumbnail-card";
 import { classMap } from "lit/directives/class-map.js";
 
+const SORT_OPTIONS = { sort: false, delay: 500, delayOnTouchOnly: true };
+
 class ToboBuilderElement extends LitElement {
   @property({ attribute: false, type: Array })
   targetList: readonly TodoItem[] = [];
@@ -97,17 +99,34 @@ class ToboBuilderElement extends LitElement {
       text-align: center;
       font-style: italic;
       padding: 16px;
+      &:not(:only-child) {
+        display: none;
+      }
     }
   `;
 
+  private onTemplateDragEnd(e: Event) {
+    const source = e.target as HTMLElement;
+    for (let c = source.lastElementChild; c; c = c.previousElementSibling) {
+      // if (!c.item) c.remove();
+    }
+  }
+
   override render() {
     return html`
-      <div class="Templates TodoList">
-        ${this.templateList.map(
-          (item) =>
-            html`<todo-thumbnail-card .item=${item}></todo-thumbnail-card>`,
-        )}
-      </div>
+      <ha-sortable
+        .options=${SORT_OPTIONS}
+        .group=${{ name: "builder-todos", pull: "clone", put: false }}
+        rollback
+        @drag-end=${this.onTemplateDragEnd}
+      >
+        <div class="Templates TodoList">
+          ${this.templateList.map(
+            (item) =>
+              html`<todo-thumbnail-card .item=${item}></todo-thumbnail-card>`,
+          )}
+        </div>
+      </ha-sortable>
       <div class="LongTerm"></div>
       <div class="Days">
         ${[...this.dayGroups].map(
@@ -119,16 +138,18 @@ class ToboBuilderElement extends LitElement {
               })}
             >
               <h3>${typeof key === "string" ? key : key.label}</h3>
-              <div class="DayItems TodoList">
-                ${items.map(
-                  (item) =>
-                    html`<todo-thumbnail-card .item=${item}>
-                    </todo-thumbnail-card>`,
-                )}
-                ${items.length === 0
-                  ? html`<div class="EmptyMessage">Drop todos here</div>`
-                  : null}
-              </div>
+              <ha-sortable .options=${SORT_OPTIONS} group="builder-todos">
+                <div class="DayItems TodoList">
+                  ${items.map(
+                    (item) =>
+                      html`<todo-thumbnail-card .item=${item}>
+                      </todo-thumbnail-card>`,
+                  )}
+                  ${items.length === 0
+                    ? html`<div class="EmptyMessage">Drop todos here</div>`
+                    : null}
+                </div>
+              </ha-sortable>
             </div>
           `,
         )}
