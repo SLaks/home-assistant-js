@@ -5,6 +5,8 @@ import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
 import "./todo-thumbnail-card";
 import { classMap } from "lit/directives/class-map.js";
+import { repeat } from "lit/directives/repeat.js";
+import { ifDefined } from "lit/directives/if-defined.js";
 
 const SORT_OPTIONS = { sort: false };
 
@@ -129,53 +131,61 @@ class ToboBuilderElement extends LitElement {
 
   override render() {
     return html`
-      <ha-sortable
-        class="Templates"
-        .options=${SORT_OPTIONS}
-        .group=${{ name: "builder-todos", pull: "clone", put: false }}
-        ?rollback=${false}
-      >
-        <div class="TodoList">
-          ${this.templateList.map(
-            (item) =>
-              html`<todo-thumbnail-card item-json=${JSON.stringify(item)}>
-              </todo-thumbnail-card>`,
-          )}
-        </div>
-      </ha-sortable>
+      ${this.renderThumbnailList({
+        items: this.templateList,
+        emptyMessage: "No templates defined",
+        className: "Templates",
+        group: { name: "builder-todos", pull: "clone", put: false },
+      })}
+
       <div class="LongTerm"></div>
       <div class="Days">
         ${[...this.dayGroups].map(
           ([key, items]) => html`
-            <div
-              class=${classMap({
-                Day: true,
-              })}
-            >
+            <div class=${classMap({ Day: true })}>
               <h3>${key.label}</h3>
-              <ha-sortable
-                .options=${SORT_OPTIONS}
-                draggable-selector="todo-thumbnail-card"
-                group="builder-todos"
-              >
-                <div class="DayItems TodoList">
-                  ${items.map(
-                    (item) =>
-                      html`<todo-thumbnail-card
-                        item-json=${JSON.stringify(item)}
-                      >
-                      </todo-thumbnail-card>`,
-                  )}
-                  ${items.length === 0
-                    ? html`<div class="EmptyMessage">Drop todos here</div>`
-                    : null}
-                </div>
-              </ha-sortable>
+              ${this.renderThumbnailList({
+                items,
+                emptyMessage: "Drop todos here",
+              })}
             </div>
           `,
         )}
       </div>
     `;
+  }
+
+  private renderThumbnailList({
+    items,
+    emptyMessage,
+    className,
+    group = "builder-todos",
+  }: {
+    items: readonly TodoItem[];
+    emptyMessage: string;
+    className?: string;
+    group?: string | object;
+  }) {
+    return html`<ha-sortable
+      class=${ifDefined(className)}
+      draggable-selector="todo-thumbnail-card"
+      .options=${SORT_OPTIONS}
+      .group=${group}
+      ?rollback=${false}
+    >
+      <div class="TodoList">
+        ${repeat(
+          items,
+          (item) => item.uid,
+          (item) =>
+            html`<todo-thumbnail-card item-json=${JSON.stringify(item)}>
+            </todo-thumbnail-card>`,
+        )}
+        ${items.length === 0
+          ? html`<div class="EmptyMessage">${emptyMessage}</div>`
+          : null}
+      </div>
+    </ha-sortable>`;
   }
 }
 
