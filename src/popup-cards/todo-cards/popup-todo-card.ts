@@ -7,21 +7,20 @@ import { property } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { updateItem, TodoItemStatus } from "../../todos/ha-api";
 import { TodoItemWithEntity } from "../../todos/subscriber";
+import { applyTodoActions } from "./todo-actions";
 
 class PopupTodoCard extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) item?: TodoItemWithEntity;
 
   async markCompleted() {
-    const updatedItem = {
-      ...this.item!,
-      status: TodoItemStatus.Completed,
-    };
-    await updateItem(this.hass!, this.item!.entityId, updatedItem);
-    await this.hass!.callApi("POST", `events/popup_todo_completed`, {
-      ...updatedItem,
-      entity_id: this.item!.entityId,
-    });
+    await updateItem(
+      this.hass!,
+      this.item!.entityId,
+      applyTodoActions(this.hass!, this.item!, {
+        status: TodoItemStatus.Completed,
+      }),
+    );
   }
 
   protected override render(): unknown {
