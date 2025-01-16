@@ -3,10 +3,10 @@ import { property, state } from "lit/decorators.js";
 import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
 import "./todo-thumbnail-card";
-import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { TodoItemWithEntity } from "../todos/subscriber";
+import { TodoItemStatus } from "../todos/ha-api";
 
 const SORT_OPTIONS = { sort: false };
 
@@ -21,7 +21,7 @@ export interface UpdateItemDetail {
   item: MakeOptional<TodoItemWithEntity, "entityId">;
   /** The new due date. */
   due?: Date;
-  isCompleted?: boolean;
+  status: TodoItemStatus;
   /**
    * The list that it should be in.
    * If this doesn't match `item.entityId`, the item should
@@ -29,6 +29,16 @@ export interface UpdateItemDetail {
    */
   targetEntity: string;
 }
+
+/** A single list/drop target in the lower panel. */
+interface DaySection extends DateOption {
+  /** The status to apply to items dropped here. */
+  status: TodoItemStatus;
+  items: TodoItemWithEntity[];
+  emptyMessage: string;
+}
+/** A column in the lower panel, with one or (for today) more lists. */
+type DayColumn = DaySection[];
 
 class ToboBuilderElement extends LitElement {
   @property({ attribute: "target-list-id" })
@@ -46,12 +56,12 @@ class ToboBuilderElement extends LitElement {
   targetDays: readonly DateOption[] = [];
 
   @state()
-  dayGroups: Map<DateOption, TodoItemWithEntity[]> = new Map();
+  daySections: DayColumn[] = [];
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (!this.targetDays.length) return;
-    this.dayGroups = this.groupItems();
+    this.daySections = this.groupItems();
   }
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     if (
@@ -59,37 +69,75 @@ class ToboBuilderElement extends LitElement {
       changedProperties.has("targetDays")
     ) {
       if (!this.targetDays.length) return;
-      this.dayGroups = this.groupItems();
+      this.daySections = this.groupItems();
     }
   }
-  private groupItems() {
-    const allDays: DateOption[] = [];
+  private groupItems(): DayColumn[] {
+    const columns: DayColumn[] = [];
     // Add past days before the first snooze option.
+    const today = dayjs().startOf("day");
     for (
       let day = dayjs().startOf("week");
-      !day.isSame(this.targetDays[0].date, "day");
+      !day.isSame(today, "day");
       day = day.add(1, "day")
     ) {
-      allDays.push({
-        date: day.toDate(),
-        label: day.isSame(new Date(), "day") ? "Today" : day.format("dddd"),
-      });
+      columns.push([
+        {
+          date: day.toDate(),
+          label: day.format("dddd"),
+          status: TodoItemStatus.Completed,
+          emptyMessage: "Drop completed todos here",
+          items: this.targetList.filter(
+            (item) =>
+              item.status === "completed" && day.isSame(item.due, "day"),
+          ),
+        },
+      ]);
     }
+
+    columns.push([
+      {
+        date: today.toDate(),
+        label: "Today",
+        status: TodoItemStatus.NeedsAction,
+        emptyMessage: "Drop today's tasks items here",
+        items: this.targetList.filter(
+          (item) =>
+            item.status === TodoItemStatus.NeedsAction &&
+            // Include uncompleted items due in the past.
+            // Also include items with no due date.
+            !dayjs(item.due || new Date()).isAfter(today, "day"),
+        ),
+      },
+      {
+        date: today.toDate(),
+        label: "Completed",
+        status: TodoItemStatus.Completed,
+        emptyMessage: "Drop completed todos here",
+        items: this.targetList.filter(
+          (item) =>
+            item.status === "completed" && today.isSame(item.due, "day"),
+        ),
+      },
+    ]);
+
     // Add snooze options in this week only
     const lastDay = dayjs().endOf("week");
-    allDays.push(...this.targetDays.filter((o) => lastDay.isAfter(o.date)));
-    return new Map(
-      allDays.map((option) => [
-        option,
-        this.targetList.filter(
-          (item) =>
-            // Ignore completed items with no date.
-            (item.status === "needs_action" || item.due) &&
-            // If the item was never snoozed, show it today.
-            dayjs(item.due || new Date()).isSame(option.date, "day"),
-        ),
-      ]),
+    columns.push(
+      ...this.targetDays
+        .filter((o) => lastDay.isAfter(o.date))
+        .map((o) => [
+          {
+            ...o,
+            status: TodoItemStatus.NeedsAction,
+            emptyMessage: "Drop todos here to snooze",
+            items: this.targetList.filter((item) =>
+              dayjs(o.date).isSame(item.due, "day"),
+            ),
+          },
+        ]),
     );
+    return columns;
   }
 
   static styles = css`
@@ -121,7 +169,7 @@ class ToboBuilderElement extends LitElement {
       h3 {
         text-align: center;
       }
-      .Day {
+      .Column {
         flex-grow: 1;
       }
     }
@@ -148,22 +196,21 @@ class ToboBuilderElement extends LitElement {
       text-align: center;
       font-style: italic;
       padding: 16px;
+      grid-column: 1/-1; /* Span all columns */
       &:not(:only-child) {
         display: none;
       }
     }
   `;
 
-  private addItemToDay(item: TodoItemWithEntity, day: DateOption) {
+  private addItemToDay(item: TodoItemWithEntity, day: DaySection) {
     this.dispatchEvent(
       new CustomEvent<UpdateItemDetail>("update-todo", {
         detail: {
           item,
           targetEntity: this.targetListId,
           due: day.date,
-          // Dragging an item to the past should mark as completed.
-          // Dragging to today marks as uncompleted.
-          isCompleted: dayjs().isAfter(day.date),
+          status: day.status,
         },
       }),
     );
@@ -180,23 +227,24 @@ class ToboBuilderElement extends LitElement {
 
       <div class="LongTerm"></div>
       <div class="Days">
-        ${[...this.dayGroups].map(
-          ([day, items]) => html`
-            <div
-              class=${classMap({ Day: true })}
-              @item-added=${(e: CustomEvent<TodoItemWithEntity>) =>
-                this.addItemToDay(e.detail, day)}
-            >
-              <h3>${day.label}</h3>
-              ${this.renderThumbnailList({
-                items,
-                emptyMessage: "Drop todos here",
-              })}
-            </div>
-          `,
+        ${[...this.daySections].map(
+          (sections) => html`<div class="Column">
+            ${sections.map((section) => this.renderSection(section))}
+          </div>`,
         )}
       </div>
     `;
+  }
+
+  private renderSection(section: DaySection) {
+    return html`<div
+      class="Day"
+      @item-added=${(e: CustomEvent<TodoItemWithEntity>) =>
+        this.addItemToDay(e.detail, section)}
+    >
+      <h3>${section.label}</h3>
+      ${this.renderThumbnailList(section)}
+    </div>`;
   }
 
   private renderThumbnailList({
@@ -228,9 +276,7 @@ class ToboBuilderElement extends LitElement {
             >
             </todo-thumbnail-card>`,
         )}
-        ${items.length === 0
-          ? html`<div class="EmptyMessage">${emptyMessage}</div>`
-          : null}
+        <div class="EmptyMessage">${emptyMessage}</div>
       </div>
     </ha-sortable>`;
   }
