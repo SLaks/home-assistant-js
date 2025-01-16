@@ -47,6 +47,8 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
 
     return html`
       <todo-builder
+        long-term-list-id=${ifDefined(this.longTermListId)}
+        target-list-id=${ifDefined(this.targetListId)}
         .targetList=${this.targetList || []}
         .templateList=${this.templateList || []}
         .longTermList=${this.longTermList || []}

@@ -1,16 +1,41 @@
 import { css, html, LitElement, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
-import { TodoItem } from "../todos/ha-api";
 import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
 import "./todo-thumbnail-card";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { ifDefined } from "lit/directives/if-defined.js";
+import { TodoItemWithEntity } from "../todos/subscriber";
 
 const SORT_OPTIONS = { sort: false };
 
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
+
+export interface UpdateItemDetail {
+  /**
+   * The existing item to update, or a new item to add.
+   * `entityId` will be null when creating a new item.
+   * TODO: Use a separate event for creating new items?
+   */
+  item: MakeOptional<TodoItemWithEntity, "entityId">;
+  /** The new due date. */
+  due?: Date;
+  isCompleted?: boolean;
+  /**
+   * The list that it should be in.
+   * If this doesn't match `item.entityId`, the item should
+   * be removed from `item.entityId` and added to this list.
+   */
+  targetEntity: string;
+}
+
 class ToboBuilderElement extends LitElement {
+  @property({ attribute: "target-list-id" })
+  targetListId: string = "";
+  @property({ attribute: "long-term-list-id" })
+  longTermListId: string = "";
+
   @property({ attribute: false, type: Array })
   targetList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
@@ -129,6 +154,21 @@ class ToboBuilderElement extends LitElement {
     }
   `;
 
+  private addItemToDay(item: TodoItemWithEntity, day: DateOption) {
+    this.dispatchEvent(
+      new CustomEvent<UpdateItemDetail>("update-todo", {
+        detail: {
+          item,
+          targetEntity: this.targetListId,
+          due: day.date,
+          // Dragging an item to the past should mark as completed.
+          // Dragging to today marks as uncompleted.
+          isCompleted: dayjs().isAfter(day.date),
+        },
+      }),
+    );
+  }
+
   override render() {
     return html`
       ${this.renderThumbnailList({
@@ -141,9 +181,13 @@ class ToboBuilderElement extends LitElement {
       <div class="LongTerm"></div>
       <div class="Days">
         ${[...this.dayGroups].map(
-          ([key, items]) => html`
-            <div class=${classMap({ Day: true })}>
-              <h3>${key.label}</h3>
+          ([day, items]) => html`
+            <div
+              class=${classMap({ Day: true })}
+              @item-added=${(e: CustomEvent<TodoItemWithEntity>) =>
+                this.addItemToDay(e.detail, day)}
+            >
+              <h3>${day.label}</h3>
               ${this.renderThumbnailList({
                 items,
                 emptyMessage: "Drop todos here",
@@ -178,7 +222,10 @@ class ToboBuilderElement extends LitElement {
           items,
           (item) => item.uid,
           (item) =>
-            html`<todo-thumbnail-card item-json=${JSON.stringify(item)}>
+            html`<todo-thumbnail-card
+              item-json=${JSON.stringify(item)}
+              .sortableData=${item}
+            >
             </todo-thumbnail-card>`,
         )}
         ${items.length === 0
