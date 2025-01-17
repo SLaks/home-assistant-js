@@ -9,6 +9,8 @@ export function applyTodoActions(
   item: TodoItemWithEntity,
   actions: { status?: TodoItemStatus; due?: Date },
 ) {
+  if (actions.status === item.status) delete actions.status;
+
   // Record the completion time, unless we're explicitly
   // marking it as completed at a specific time.
   if (actions.status === TodoItemStatus.Completed && !actions.due) {

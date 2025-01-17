@@ -64,6 +64,40 @@ export function updateItem(
     { entity_id },
   );
 }
+export function createItem(
+  hass: HomeAssistant,
+  entity_id: string,
+  item: Omit<TodoItem, "uid" | "status">,
+) {
+  return hass.callService(
+    "todo",
+    "add_item",
+    {
+      item: item.summary,
+      description: item.description || undefined,
+      due_datetime: item.due?.includes("T") ? item.due : undefined,
+      due_date:
+        item.due === undefined || item.due?.includes("T")
+          ? undefined
+          : item.due,
+    },
+    { entity_id },
+  );
+}
+export function deleteItems(
+  hass: HomeAssistant,
+  entity_id: string,
+  uids: string[],
+) {
+  return hass.callService(
+    "todo",
+    "remove_item",
+    {
+      item: uids,
+    },
+    { entity_id },
+  );
+}
 
 export const supportsFeature = (
   stateObj: HassEntity,

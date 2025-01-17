@@ -10,6 +10,14 @@ import {
 } from "../popup-cards/todo-cards/target-days";
 import "./builder-ui";
 import { TodoItemWithEntity } from "../todos/subscriber";
+import { UpdateItemDetail } from "./builder-ui";
+import {
+  createItem,
+  deleteItems,
+  TodoItemStatus,
+  updateItem,
+} from "../todos/ha-api";
+import { applyTodoActions } from "../popup-cards/todo-cards/todo-actions";
 
 class TodoBuilderCardElement extends SimpleEntityBasedElement {
   @state()
@@ -42,6 +50,63 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
     this.templateListId = config.template_list;
   }
 
+  private async updateTodo(e: CustomEvent<UpdateItemDetail>) {
+    const promises: Promise<unknown>[] = [];
+    const sourceListId = e.detail.item.entityId;
+    if (
+      sourceListId &&
+      sourceListId !== e.detail.targetEntity &&
+      sourceListId !== this.templateListId
+    ) {
+      promises.push(deleteItems(this.hass!, sourceListId, [e.detail.item.uid]));
+    }
+    const updatedItem = applyTodoActions(
+      this.hass!,
+      { ...e.detail.item, entityId: e.detail.targetEntity },
+      e.detail,
+    );
+
+    if (sourceListId === e.detail.targetEntity) {
+      promises.push(updateItem(this.hass!, e.detail.targetEntity, updatedItem));
+    } else {
+      const created = createItem(
+        this.hass!,
+        e.detail.targetEntity,
+        updatedItem,
+      );
+      promises.push(created);
+      if (e.detail.status === TodoItemStatus.Completed) {
+        // HA cannot create already-completed items, so immediately update it to be completed.
+        await created;
+        promises.push(this.markNewItemAsCompleted(updatedItem));
+      }
+    }
+  }
+
+  /** Finds a newly-inserted item and marks it as completed. */
+  private async markNewItemAsCompleted(insertedItem: TodoItemWithEntity) {
+    for (let i = 0; i < 5; i++) {
+      const createdItem = this.targetList?.find(
+        (item) =>
+          item.status === TodoItemStatus.NeedsAction &&
+          item.summary === insertedItem.summary &&
+          item.description === insertedItem.description &&
+          new Date(item.due!).toISOString() ===
+            new Date(insertedItem.due!).toISOString(),
+      );
+      if (!createdItem) {
+        await new Promise((r) => setTimeout(r, (i + 1) * 100));
+        continue;
+      }
+      await updateItem(this.hass!, insertedItem.entityId, {
+        ...createdItem,
+        status: TodoItemStatus.Completed,
+      });
+      return;
+    }
+    console.warn("Could not find created item", insertedItem);
+  }
+
   override render() {
     if (!this.hass) return html`Loading...`;
 
@@ -53,6 +118,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         .templateList=${this.templateList || []}
         .longTermList=${this.longTermList || []}
         .targetDays=${this.targetDays || []}
+        @update-todo=${this.updateTodo}
       ></todo-builder>
       <todo-target-days
         .hass=${this.hass}

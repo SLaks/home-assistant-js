@@ -239,8 +239,8 @@ class ToboBuilderElement extends LitElement {
   private renderSection(section: DaySection) {
     return html`<div
       class="Day"
-      @item-added=${(e: CustomEvent<TodoItemWithEntity>) =>
-        this.addItemToDay(e.detail, section)}
+      @item-added=${(e: CustomEvent<{ data: TodoItemWithEntity }>) =>
+        this.addItemToDay(e.detail.data, section)}
     >
       <h3>${section.label}</h3>
       ${this.renderThumbnailList(section)}
