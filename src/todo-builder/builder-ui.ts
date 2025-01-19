@@ -19,16 +19,18 @@ export interface UpdateItemDetail {
    * `entityId` will be null when creating a new item.
    * TODO: Use a separate event for creating new items?
    */
-readonly   item: MakeOptional<TodoItemWithEntity, "entityId">;
+readonly item: MakeOptional<TodoItemWithEntity, "entityId">;
   /** The new due date. */
-readonly   due?: Date;
-readonly   status: TodoItemStatus;
+readonly due?: Date;
+readonly status: TodoItemStatus;
   /**
    * The list that it should be in.
    * If this doesn't match `item.entityId`, the item should
    * be removed from `item.entityId` and added to this list.
    */
-readonly   targetEntity: string;
+readonly targetEntity: string;
+/** The `.uid` of the item that the new item should be placed after. */
+  previousUid?: string;
 /** Set by the event handler when all operations are complete. */
   complete: Promise<unknown>;
 }
@@ -221,12 +223,17 @@ class ToboBuilderElement extends LitElement {
     }
   `;
 
-  private addItemToDay(item: TodoItemWithEntity, day: DaySection) {
+  private addItemToDay(
+item: TodoItemWithEntity,
+day: DaySection,
+    previousUid?: string,
+) {
     const detail: UpdateItemDetail = {
           item,
           targetEntity: this.targetListId,
           due: day.date,
           status: day.status,
+previousUid,
         complete: Promise.resolve(),
       };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
@@ -257,8 +264,14 @@ class ToboBuilderElement extends LitElement {
   private renderSection(section: DaySection) {
     return html`<div
       class="Day"
-      @item-added=${(e: CustomEvent<{ data: TodoItemWithEntity }>) =>
-        this.addItemToDay(e.detail.data, section)}
+      @item-added=${(
+e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
+) =>
+        this.addItemToDay(
+e.detail.data,
+          section,
+section.items[e.detail.index - 1]?.uid,
+)}
     >
       <h3>${section.label}</h3>
       ${this.renderThumbnailList(section)}

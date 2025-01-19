@@ -99,6 +99,20 @@ export function deleteItems(
   );
 }
 
+export function moveItem(
+  hass: HomeAssistant,
+  entity_id: string,
+  uid: string,
+  previous_uid: string | undefined,
+): Promise<void> {
+  return hass.callWS({
+    type: "todo/item/move",
+    entity_id,
+    uid,
+    previous_uid,
+  });
+}
+  
 export const supportsFeature = (
   stateObj: HassEntity,
   feature: number,

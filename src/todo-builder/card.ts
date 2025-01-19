@@ -14,6 +14,7 @@ import { UpdateItemDetail } from "./builder-ui";
 import {
   createItem,
   deleteItems,
+  moveItem,
   TodoItemStatus,
   updateItem,
 } from "../todos/ha-api";
@@ -84,22 +85,37 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
       );
 
       if (sourceListId === e.detail.targetEntity) {
-        promises.push(
-          updateItem(this.hass!, e.detail.targetEntity, updatedItem),
-        );
+        if (e.detail.due || e.detail.status !== e.detail.item.status) {
+          promises.push(
+            updateItem(this.hass!, e.detail.targetEntity, updatedItem),
+          );
+        }
       } else {
-        const created = createItem(
-          this.hass!,
-          e.detail.targetEntity,
-          updatedItem,
+        promises.push(
+          createItem(this.hass!, e.detail.targetEntity, updatedItem),
         );
-        promises.push(created);
+        await promises[promises.length - 1];
+        await this.setNewItemUid(updatedItem);
         if (e.detail.status === TodoItemStatus.Completed) {
           // HA cannot create already-completed items, so immediately update it to be completed.
-          await created;
-          promises.push(this.markNewItemAsCompleted(updatedItem));
+          promises.push(
+            updateItem(this.hass!, e.detail.targetEntity, {
+              ...updatedItem,
+              status: TodoItemStatus.Completed,
+            }),
+          );
+          await promises[promises.length - 1];
         }
       }
+
+      promises.push(
+        moveItem(
+          this.hass!,
+          e.detail.targetEntity,
+          updatedItem.uid,
+          e.detail.previousUid,
+        ),
+      );
       e.detail.complete = Promise.all(promises);
       await e.detail.complete;
     } finally {
@@ -107,11 +123,12 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
     }
   }
 
-  /** Finds a newly-inserted item and marks it as completed. */
-  private async markNewItemAsCompleted(insertedItem: TodoItemWithEntity) {
+  /** Sets the `uid` field of an just-inserted item, finding the inserted item in the list. */
+  private async setNewItemUid(insertedItem: TodoItemWithEntity) {
     for (let i = 0; i < 5; i++) {
       const createdItem = this.targetList?.find(
         (item) =>
+          // Todos cannot be created as completed.
           item.status === TodoItemStatus.NeedsAction &&
           item.summary === insertedItem.summary &&
           item.description === insertedItem.description &&
@@ -122,13 +139,11 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         await new Promise((r) => setTimeout(r, (i + 1) * 100));
         continue;
       }
-      await updateItem(this.hass!, insertedItem.entityId, {
-        ...createdItem,
-        status: TodoItemStatus.Completed,
-      });
+      insertedItem.uid = createdItem.uid;
       return;
     }
     console.warn("Could not find created item", insertedItem);
+    throw new Error("Could not find created item");
   }
 
   override render() {
