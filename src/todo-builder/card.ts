@@ -2,7 +2,7 @@ import "../popup-cards/todo-cards/target-days";
 import "../todos/subscriber";
 import { state } from "lit/decorators.js";
 import { SimpleEntityBasedElement } from "../base-elements";
-import { html } from "lit";
+import { html, PropertyValues } from "lit";
 import { ifDefined } from "lit/directives/if-defined.js";
 import {
   DateOption,
@@ -36,12 +36,25 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   @state()
   targetDays?: DateOption[];
 
+  /**
+   * Suppresses updates from intermediary states while saving.
+   * This prevents a flsah of an uncompleted item (in a different position in the list)
+   * when dragging a new item to an already-completed column.
+   */
+  @state()
+  isSaving = false;
+
   static getStubConfig(): CardConfig {
     return {
       target_list: "todo.my_tasks",
       long_term_list: "todo.long_term_tasks",
       template_list: "todo.common_tasks",
     };
+  }
+
+  override shouldUpdate(changedProps: PropertyValues<this>): boolean {
+    // Block all updates while saving, to prevent flicker.
+    return !this.isSaving && super.shouldUpdate(changedProps);
   }
 
   setConfig(config: CardConfig) {
@@ -51,35 +64,46 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   }
 
   private async updateTodo(e: CustomEvent<UpdateItemDetail>) {
-    const promises: Promise<unknown>[] = [];
-    const sourceListId = e.detail.item.entityId;
-    if (
-      sourceListId &&
-      sourceListId !== e.detail.targetEntity &&
-      sourceListId !== this.templateListId
-    ) {
-      promises.push(deleteItems(this.hass!, sourceListId, [e.detail.item.uid]));
-    }
-    const updatedItem = applyTodoActions(
-      this.hass!,
-      { ...e.detail.item, entityId: e.detail.targetEntity },
-      e.detail,
-    );
-
-    if (sourceListId === e.detail.targetEntity) {
-      promises.push(updateItem(this.hass!, e.detail.targetEntity, updatedItem));
-    } else {
-      const created = createItem(
-        this.hass!,
-        e.detail.targetEntity,
-        updatedItem,
-      );
-      promises.push(created);
-      if (e.detail.status === TodoItemStatus.Completed) {
-        // HA cannot create already-completed items, so immediately update it to be completed.
-        await created;
-        promises.push(this.markNewItemAsCompleted(updatedItem));
+    this.isSaving = true;
+    try {
+      const promises: Promise<unknown>[] = [];
+      const sourceListId = e.detail.item.entityId;
+      if (
+        sourceListId &&
+        sourceListId !== e.detail.targetEntity &&
+        sourceListId !== this.templateListId
+      ) {
+        promises.push(
+          deleteItems(this.hass!, sourceListId, [e.detail.item.uid]),
+        );
       }
+      const updatedItem = applyTodoActions(
+        this.hass!,
+        { ...e.detail.item, entityId: e.detail.targetEntity },
+        e.detail,
+      );
+
+      if (sourceListId === e.detail.targetEntity) {
+        promises.push(
+          updateItem(this.hass!, e.detail.targetEntity, updatedItem),
+        );
+      } else {
+        const created = createItem(
+          this.hass!,
+          e.detail.targetEntity,
+          updatedItem,
+        );
+        promises.push(created);
+        if (e.detail.status === TodoItemStatus.Completed) {
+          // HA cannot create already-completed items, so immediately update it to be completed.
+          await created;
+          promises.push(this.markNewItemAsCompleted(updatedItem));
+        }
+      }
+      e.detail.complete = Promise.all(promises);
+      await e.detail.complete;
+    } finally {
+      this.isSaving = false;
     }
   }
 

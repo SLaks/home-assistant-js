@@ -7,6 +7,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { TodoItemWithEntity } from "../todos/subscriber";
 import { TodoItemStatus } from "../todos/ha-api";
+import { keyed } from "lit/directives/keyed.js";
 
 const SORT_OPTIONS = { sort: false };
 
@@ -18,16 +19,18 @@ export interface UpdateItemDetail {
    * `entityId` will be null when creating a new item.
    * TODO: Use a separate event for creating new items?
    */
-  item: MakeOptional<TodoItemWithEntity, "entityId">;
+readonly   item: MakeOptional<TodoItemWithEntity, "entityId">;
   /** The new due date. */
-  due?: Date;
-  status: TodoItemStatus;
+readonly   due?: Date;
+readonly   status: TodoItemStatus;
   /**
    * The list that it should be in.
    * If this doesn't match `item.entityId`, the item should
    * be removed from `item.entityId` and added to this list.
    */
-  targetEntity: string;
+readonly   targetEntity: string;
+/** Set by the event handler when all operations are complete. */
+  complete: Promise<unknown>;
 }
 
 /** A single list/drop target in the lower panel. */
@@ -57,6 +60,17 @@ class ToboBuilderElement extends LitElement {
 
   @state()
   daySections: DayColumn[] = [];
+
+  /**
+   * Used to recreate the Sortables after dragging, to remove fake elements from SortableJS.
+   * Otherwise, we get duplicate items, or items missing properties that cannot be dragged
+   * a second time.
+   * This value changes whenever an item is added or removed from any list.
+   * This includes dragging an item between days, which does not change the
+   * total count.
+   */
+  @state()
+  renderVersion = "";
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -137,6 +151,10 @@ class ToboBuilderElement extends LitElement {
           },
         ]),
     );
+    this.renderVersion = columns
+      .map((c) => c.map((s) => s.items.length).join())
+      .concat([this.longTermList.length.toString()])
+      .join();
     return columns;
   }
 
@@ -204,16 +222,16 @@ class ToboBuilderElement extends LitElement {
   `;
 
   private addItemToDay(item: TodoItemWithEntity, day: DaySection) {
-    this.dispatchEvent(
-      new CustomEvent<UpdateItemDetail>("update-todo", {
-        detail: {
+    const detail: UpdateItemDetail = {
           item,
           targetEntity: this.targetListId,
           due: day.date,
           status: day.status,
-        },
-      }),
-    );
+        complete: Promise.resolve(),
+      };
+    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
+    // If the operation fails, reset the SortableJS DOM.
+    detail.complete.catch(() => (this.renderVersion = "Error"));
   }
 
   override render() {
@@ -258,7 +276,9 @@ class ToboBuilderElement extends LitElement {
     className?: string;
     group?: string | object;
   }) {
-    return html`<ha-sortable
+    return keyed(
+      this.renderVersion,
+html`<ha-sortable
       class=${ifDefined(className)}
       draggable-selector="todo-thumbnail-card"
       .options=${SORT_OPTIONS}
@@ -278,7 +298,8 @@ class ToboBuilderElement extends LitElement {
         )}
         <div class="EmptyMessage">${emptyMessage}</div>
       </div>
-    </ha-sortable>`;
+    </ha-sortable>`,
+    );
   }
 }
 
