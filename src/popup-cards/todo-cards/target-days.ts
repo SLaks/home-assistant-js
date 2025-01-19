@@ -6,18 +6,30 @@ import {
   stateToBool,
 } from "../../base-elements";
 import isBetween from "dayjs/plugin/isBetween";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { PropertyValues } from "lit";
+
+dayjs.extend(customParseFormat);
 
 dayjs.extend(isBetween);
 
 export interface TodoTargetDetails {
-  quickOptions: DateOption[];
+  quickOptions: Array<DateOption | DateMenu>;
   fullWeek: DateOption[];
 }
 export interface DateOption {
   label: string;
   date: Date;
+  /** Never set, but must exist to make this work as a discriminated union. */
+  type?: undefined;
 }
+
+export interface DateMenu {
+  label: string;
+  options: DateOption[];
+  type: "menu";
+}
+
 class TodoTargetDaysElement extends SimpleEntityBasedElement {
   override willUpdate(changedProps: PropertyValues<this>): void {
     super.willUpdate(changedProps);
@@ -50,13 +62,36 @@ class TodoTargetDaysElement extends SimpleEntityBasedElement {
   @state()
   motzeiDate?: dayjs.Dayjs;
 
+  @state()
+  @bindEntity({
+    entityId: "input_select.snooze_times",
+    attributeName: "options",
+  })
+  snoozeTimeOptions1: string[] = [];
+  @state()
+  @bindEntity({
+    entityId: "sensor.snooze_times",
+    attributeName: "options",
+  })
+  snoozeTimeOptions2: string[] = [];
+
+  private computeTimeMenu(): DateOption[] {
+    const now = dayjs();
+    return this.snoozeTimeOptions1
+      .concat(this.snoozeTimeOptions2)
+      .map((label) => ({ date: dayjs(label, "h:mm A").toDate(), label }))
+      .filter(({ date }) => now.isBefore(date));
+  }
+
   private computeQuickOptions() {
-    const options: DateOption[] = [];
+    const options: Array<DateOption | DateMenu> = [];
 
     const today = dayjs().startOf("day");
 
     if (!this.isErev) {
-      options.push({ label: "8:00 PM", date: today.hour(20).toDate() });
+      const times = this.computeTimeMenu();
+      if (times.length)
+        options.push({ type: "menu", label: "Today at...", options: times });
     }
     options.push({
       label: this.isErev ? this.motzeiLabel() : "Tomorrow",
@@ -64,7 +99,10 @@ class TodoTargetDaysElement extends SimpleEntityBasedElement {
     });
 
     const nextWeek = this.motzeiDate?.add(1, "day").hour(8);
-    if (nextWeek && !options.some(({ date }) => nextWeek.isSame(date, "day"))) {
+    if (
+      nextWeek &&
+      !options.some((o) => o.type !== "menu" && nextWeek.isSame(o.date, "day"))
+    ) {
       options.push({
         label: `Next ${nextWeek.format("dddd")}`,
         date: nextWeek.toDate(),
@@ -72,7 +110,7 @@ class TodoTargetDaysElement extends SimpleEntityBasedElement {
     }
 
     const now = dayjs();
-    return options.filter(({ date }) => now.isBefore(date));
+    return options.filter((o) => o.type === "menu" || now.isBefore(o.date));
   }
 
   private computeFullWeek() {

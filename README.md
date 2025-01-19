@@ -112,6 +112,16 @@ To do this:
 
         </details>
 
+#### Snoozing
+
+Popup todo cards use the Due field to mean "Snooze until".  If a todo has a due date/time, its popup card will not appear until _after_ that time.  For todo lists that don't support times (eg, Google Tasks), the system can store due times in the description field to allow time-based snoozing anyway.
+
+Each todo card will offer buttons to snooze to any day in the next week.
+
+You can also create an Input Select and/or a Template Sensor named `Snooze Times` with a list of times (eg, `8:00 PM`; must have exactly this format).  Todo popup cards will then offer a `Today at...` menu to snooze to any of those times (that are not in the past).
+
+Use an Input Select to easily adjust the list of times.  Use a template sensor (which must render an array in the `options` attribute) if you want to dynamically compute the set of snooze options in a Jinja template.
+
 ### Entity Popup Cards
 
 You can create your own popup cards linked to entities, and provide a sensor that specifies which entities to show cards for.

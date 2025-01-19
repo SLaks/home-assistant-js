@@ -3,7 +3,7 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
 import { applyDueTimestamp } from "./due-times";
 import { css, html, LitElement } from "lit";
-import { DateOption, TodoTargetDetails } from "./target-days";
+import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";
 import { updateItem } from "../../todos/ha-api";
 
@@ -12,7 +12,7 @@ class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) item?: TodoItemWithEntity;
 
   @state()
-  snoozeButtons: DateOption[] = [];
+  snoozeButtons: Array<DateOption | DateMenu> = [];
   @state()
   snoozeMenu: DateOption[] = [];
 
@@ -50,8 +50,9 @@ class PopupTodoSnoozerElement extends LitElement {
     }
   `;
   protected override render(): unknown {
-    const menuButton = html` <ha-button-menu
-      @action=${this.handleSnoozeMenu}
+    const menuButton = html`<ha-button-menu
+      @action=${(e: CustomEvent) =>
+        this.snoozeTo(this.snoozeMenu[e.detail.index].date)}
       corner="BOTTOM_END"
       menucorner="END"
       fixed
@@ -72,19 +73,29 @@ class PopupTodoSnoozerElement extends LitElement {
       ></todo-target-days>
       <div class="Label">Snooze until ${menuButton}</div>
       <div class="Buttons">
-        ${this.snoozeButtons.map(
-          (b) =>
-            html`<mwc-button @click=${() => this.snoozeTo(b.date)} raised>
-              ${b.label}
-            </mwc-button>`,
-        )}
+        ${this.snoozeButtons.map((b) => this.renderSnoozeButton(b))}
       </div>
     `;
   }
 
-  private handleSnoozeMenu(e: CustomEvent<{ index: number }>) {
-    this.snoozeTo(this.snoozeMenu[e.detail.index].date);
+  private renderSnoozeButton(entry: DateOption | DateMenu) {
+    if (entry.type === "menu") {
+      return html`<ha-button-menu
+        @action=${(e: CustomEvent) =>
+          this.snoozeTo(entry.options[e.detail.index].date)}
+        fixed
+      >
+        <mwc-button slot="trigger" raised fullwidth>${entry.label}</mwc-button>
+        ${entry.options.map(
+          (o) => html`<ha-list-item>${o.label}</ha-list-item>`,
+        )}
+      </ha-button-menu>`;
+    }
+    return html`<mwc-button @click=${() => this.snoozeTo(entry.date)} raised>
+      ${entry.label}
+    </mwc-button>`;
   }
+
   private snoozeTo(date: Date) {
     updateItem(
       this.hass!,
