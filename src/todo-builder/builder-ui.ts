@@ -9,7 +9,6 @@ import { TodoItemWithEntity } from "../todos/subscriber";
 import { TodoItemStatus } from "../todos/ha-api";
 import { keyed } from "lit/directives/keyed.js";
 
-const SORT_OPTIONS = { sort: false };
 
 type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -293,9 +292,11 @@ section.items[e.detail.index - 1]?.uid,
       this.renderVersion,
 html`<ha-sortable
       class=${ifDefined(className)}
+@item-moved=${(
+          e: CustomEvent<{ newIndex: number; oldIndex: number }>,
+        ) => this.onItemMoved(items, e.detail.oldIndex, e.detail.newIndex)}
       draggable-selector="todo-thumbnail-card"
-      .options=${SORT_OPTIONS}
-      .group=${group}
+            .group=${group}
       ?rollback=${false}
     >
       <div class="TodoList">
@@ -312,6 +313,34 @@ html`<ha-sortable
         <div class="EmptyMessage">${emptyMessage}</div>
       </div>
     </ha-sortable>`,
+    );
+  }
+
+  onItemMoved(
+    items: readonly TodoItemWithEntity[],
+    oldIndex: number,
+    newIndex: number,
+  ) {
+    const item = items[oldIndex];
+    let prevItem: TodoItemWithEntity | undefined;
+    if (newIndex > 0) {
+      if (newIndex < oldIndex) {
+        prevItem = items[newIndex - 1];
+      } else {
+        prevItem = items[newIndex];
+      }
+    }
+
+    this.dispatchEvent(
+      new CustomEvent<UpdateItemDetail>("update-todo", {
+        detail: {
+          item,
+          targetEntity: item.entityId,
+          status: item.status,
+          previousUid: prevItem?.uid,
+          complete: Promise.resolve(),
+        },
+      }),
     );
   }
 }
