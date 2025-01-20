@@ -56,10 +56,10 @@ class TodoThumbnailCard extends LitElement {
         --border-color: #388e3c;
       }
       &.isUrgent {
-        --border-color: #f9a825;
+        --border-color: #c62828;
       }
       &.isSnoozed {
-        --border-color: #f57c00;
+        --border-color: #fbc02d;
       }
     }
     popup-todo-icon {

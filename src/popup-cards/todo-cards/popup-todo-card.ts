@@ -37,8 +37,8 @@ class PopupTodoCard extends LitElement {
   }
   static styles = css`
     .Urgent {
-      --ha-card-border-color: #fbc02d;
-      --ha-card-border-width: 6px;
+      --ha-card-border-color: #c62828;
+      --ha-card-border-width: 4px;
     }
   `;
 
