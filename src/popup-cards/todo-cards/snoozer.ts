@@ -6,10 +6,13 @@ import { css, html, LitElement } from "lit";
 import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";
 import { updateItem } from "../../todos/ha-api";
+import { applyTodoActions } from "./todo-actions";
 
 class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) item?: TodoItemWithEntity;
+  @property({ attribute: "is-urgent", type: Boolean })
+  isUrgent = false;
 
   @state()
   snoozeButtons: Array<DateOption | DateMenu> = [];
@@ -51,10 +54,12 @@ class PopupTodoSnoozerElement extends LitElement {
   `;
   protected override render(): unknown {
     const menuButton = html`<ha-button-menu
-      @action=${(e: CustomEvent) =>
-        this.snoozeTo(this.snoozeMenu[e.detail.index].date)}
+      @action=${(e: CustomEvent) => {
+        if (e.detail.index >= this.snoozeMenu.length) this.toggleUrgent();
+        else this.snoozeTo(this.snoozeMenu[e.detail.index].date);
+      }}
       corner="BOTTOM_END"
-      menucorner="END"
+      menu-corner="END"
       fixed
     >
       <ha-icon-button slot="trigger" label="More">
@@ -64,6 +69,10 @@ class PopupTodoSnoozerElement extends LitElement {
       ${this.snoozeMenu.map(
         (b) => html`<ha-list-item>${b.label}</ha-list-item>`,
       )}
+      <li divider role="separator"></li>
+      <ha-list-item
+        >${this.isUrgent ? "Not urgent" : "Mark as urgent"}</ha-list-item
+      >
     </ha-button-menu>`;
 
     return html`
@@ -96,11 +105,21 @@ class PopupTodoSnoozerElement extends LitElement {
     </mwc-button>`;
   }
 
-  private snoozeTo(date: Date) {
+  private toggleUrgent() {
     updateItem(
       this.hass!,
       this.item!.entityId,
-      applyDueTimestamp(this.hass!, this.item!, date),
+      applyTodoActions(this.hass!, this.item!, {
+        urgent: !this.isUrgent,
+      }),
+    );
+  }
+
+  private snoozeTo(due: Date) {
+    updateItem(
+      this.hass!,
+      this.item!.entityId,
+      applyTodoActions(this.hass!, this.item!, { due }),
     );
   }
 }

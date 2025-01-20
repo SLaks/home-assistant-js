@@ -25,6 +25,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   todoEntityId?: string;
 
   @state()
+  showUrgentTodosOnly = false;
+
+  @state()
   cardListEntityId?: string;
 
   @state()
@@ -48,7 +51,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     // Always recount cards every minute in case a todo item reaches its due time.
     this.cardCount =
       this.cardEntities.length +
-      this.todoItems.filter(shouldShowTodoCard).length;
+      this.todoItems.filter((i) =>
+        shouldShowTodoCard(i, this.showUrgentTodosOnly),
+      ).length;
 
     // If the count actually changed, reopen the popup.
     // If this runs every time, isOpen will be stuck as
@@ -75,6 +80,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     if (this.todoEntityId !== config.todo_entity_id) this.todoItems = [];
     this.todoEntityId = config.todo_entity_id;
     this.cardListEntityId = config.card_list_entity_id;
+    this.showUrgentTodosOnly = !!config.show_urgent_todos_only;
     this.browserIds = config.browser_ids
       ? new Set(
           config.browser_ids.map((b) =>
@@ -113,6 +119,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     // This prevents us from leaking cached rendered card elements.
     const content = html`<popup-card-list
       .cardEntities=${this.cardEntities}
+      .showUrgentTodosOnly=${this.showUrgentTodosOnly}
       .hass=${this.hass}
       .todoItems=${this.todoItems}
       .cardCount=${this.cardCount}
@@ -161,8 +168,8 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     const todoEntity = this.hass?.states[this.todoEntityId];
     if (todoEntity) {
       return html`<li>
-        ${todoEntity.state} todo(s) from list
-        ${todoEntity.attributes.friendly_name}
+        Up to ${todoEntity.state} ${this.showUrgentTodosOnly ? "urgent" : ""}
+        todo(s) from list ${todoEntity.attributes.friendly_name}
       </li>`;
     }
     return html`<li>
@@ -208,6 +215,7 @@ interface CardBehaviorOptions {
   reopen_delay_ms?: string;
   todo_entity_id?: string;
   card_list_entity_id?: string;
+  show_urgent_todos_only?: boolean;
 }
 interface CardBrowserSpec extends CardBehaviorOptions {
   browser_id: string;

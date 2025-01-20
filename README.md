@@ -122,6 +122,12 @@ You can also create an Input Select and/or a Template Sensor named `Snooze Times
 
 Use an Input Select to easily adjust the list of times.  Use a template sensor (which must render an array in the `options` attribute) if you want to dynamically compute the set of snooze options in a Jinja template.
 
+### Urgent
+
+You can mark a todo as urgent from the action menu in the popup card (this is stored in the description).  Snoozing a todo to a specific time today also marks as urgent.
+
+Set `show_urgent_todos_only: true` in the card config (or for a specific browser in `browsers:`) to only show popup cards marked urgent.
+
 ### Entity Popup Cards
 
 You can create your own popup cards linked to entities, and provide a sensor that specifies which entities to show cards for.
@@ -254,6 +260,8 @@ styles:
         - browser_id: Front Hallway
             card_list_entity_id: sensor.urgent_popup_cards
             todo_entity_id: null # Don't show any todos
+            # or
+            show_urgent_todos_only: true
     ```
 
 [button_card]: https://github.com/custom-cards/button-card

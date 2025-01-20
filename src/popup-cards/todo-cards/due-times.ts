@@ -6,6 +6,7 @@ import {
   TodoListEntityFeature,
 } from "../../todos/ha-api";
 import { TodoItemWithEntity } from "../../todos/subscriber";
+import { isUrgent } from "./todo-actions";
 
 /** JSON that we store in the `description` field to save additional data. */
 export interface TodoDetails {
@@ -15,10 +16,22 @@ export interface TodoDetails {
 }
 
 /** Indicates whether a todo item should appear as a popup card. */
-export function shouldShowTodoCard(item: TodoItem) {
+export function shouldShowTodoCard(
+  item: TodoItem,
+  showUrgentTodosOnly: boolean,
+): boolean {
   if (item.status === TodoItemStatus.Completed) return false;
+  if (showUrgentTodosOnly && !isUrgent(item)) return false;
   const startTime = computeDueTimestamp(item);
   return !startTime || startTime < new Date();
+}
+
+/** Returns true if an item is snoozed for between now and midnight. */
+export function isSnoozedLaterToday(item: TodoItem): boolean {
+  const due = computeDueTimestamp(item);
+  if (!due) return false;
+  const now = new Date();
+  return due > now && due < new Date(now.setHours(23, 59, 59, 999));
 }
 
 /** Resolves a todo item's due time, reading from our custom field if necessary. */

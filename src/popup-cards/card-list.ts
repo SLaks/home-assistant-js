@@ -36,6 +36,8 @@ class PopupCardListElement extends LitElement {
   /** The number of visible cards, as filtered by the caller. */
   @property({ attribute: false })
   cardCount = 0;
+  @property({ attribute: false })
+  showUrgentTodosOnly = false;
 
   @state()
   missingCards: string[] = [];
@@ -98,7 +100,10 @@ class PopupCardListElement extends LitElement {
     for (const item of this.todoItems) {
       // If we've already stored a completed item, keep updating it.
       // If we've never seen it before, don't store it at all.
-      if (shouldShowTodoCard(item) || this.todoMap.has(item.uid))
+      if (
+        shouldShowTodoCard(item, this.showUrgentTodosOnly) ||
+        this.todoMap.has(item.uid)
+      )
         this.todoMap.set(item.uid, item);
     }
   }
@@ -189,7 +194,7 @@ class PopupCardListElement extends LitElement {
         this.todoMap.values(),
         ({ uid }) => uid,
         (item) => {
-          const isHidden = !shouldShowTodoCard(item);
+          const isHidden = !shouldShowTodoCard(item, this.showUrgentTodosOnly);
           return html`<div
             class="CardWrapper ${classMap({ isHidden })}"
             @transitionend=${this.onCardTransitionEnd}
