@@ -3,6 +3,8 @@ import { property, state } from "lit/decorators.js";
 import { TodoItem } from "../todos/ha-api";
 import "../popup-cards/todo-cards/todo-icon";
 import { classMap } from "lit/directives/class-map.js";
+import { isUrgent as isItemUrgent } from "../popup-cards/todo-cards/todo-actions";
+import { isSnoozedLaterToday } from "../popup-cards/todo-cards/due-times";
 
 class TodoThumbnailCard extends LitElement {
   // This element is dragged, so it must render entirely from attributes.
@@ -40,9 +42,17 @@ class TodoThumbnailCard extends LitElement {
       padding: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 
-      --completed-color: #388e3c;
+      transition: border-color 0.2s ease-out;
+      --border-color: white;
+      border: 2px solid var(--border-color);
       &.isCompleted {
-        border: 2px solid var(--completed-color);
+        --border-color: #388e3c;
+      }
+      &.isUrgent {
+        --border-color: #f9a825;
+      }
+      &.isSnoozed {
+        --border-color: #f57c00;
       }
     }
     popup-todo-icon {
@@ -56,7 +66,7 @@ class TodoThumbnailCard extends LitElement {
     }
 
     ha-icon {
-      color: var(--completed-color);
+      color: var(--border-color);
       position: absolute;
       top: -12px;
       left: -12px;
@@ -66,19 +76,27 @@ class TodoThumbnailCard extends LitElement {
   `;
 
   protected override render(): unknown {
-    const isCompleted = this.item?.status === "completed";
+if (!this.item) return;
+    const isCompleted = this.item.status === "completed";
+const isUrgent = isItemUrgent(this.item);
+    const isSnoozed = isSnoozedLaterToday(this.item);
+    let icon = "";
+    if (isCompleted) icon = "mdi:check-circle";
+    if (isSnoozed) icon = "mdi:clock";
+    if (isUrgent) icon = "mdi:alert-circle";
+    if (isUrgent && isSnoozed) icon = "mdi:clock-alert-outline";
     return html`
       <div
         class=${classMap({
           Root: true,
           isCompleted,
+isUrgent,
+          isSnoozed,
         })}
       >
         <popup-todo-icon .item=${this.item}></popup-todo-icon>
         <div class="Name">${this.item?.summary}</div>
-        ${isCompleted
-          ? html`<ha-icon icon="mdi:check-circle">Completed</ha-icon>`
-          : nothing}
+        ${icon ? html`<ha-icon icon=${icon}></ha-icon>` : nothing}
       </div>
     `;
   }
