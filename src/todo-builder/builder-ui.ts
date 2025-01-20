@@ -18,19 +18,19 @@ export interface UpdateItemDetail {
    * `entityId` will be null when creating a new item.
    * TODO: Use a separate event for creating new items?
    */
-readonly item: MakeOptional<TodoItemWithEntity, "entityId">;
+  readonly item: MakeOptional<TodoItemWithEntity, "entityId">;
   /** The new due date. */
-readonly due?: Date;
-readonly status: TodoItemStatus;
+  readonly due?: Date;
+  readonly status: TodoItemStatus;
   /**
    * The list that it should be in.
    * If this doesn't match `item.entityId`, the item should
    * be removed from `item.entityId` and added to this list.
    */
-readonly targetEntity: string;
-/** The `.uid` of the item that the new item should be placed after. */
+  readonly targetEntity: string;
+  /** The `.uid` of the item that the new item should be placed after. */
   previousUid?: string;
-/** Set by the event handler when all operations are complete. */
+  /** Set by the event handler when all operations are complete. */
   complete: Promise<unknown>;
 }
 
@@ -173,6 +173,13 @@ class ToboBuilderElement extends LitElement {
       --ha-card-box-shadow: var(--restore-card-box-shadow, none);
     }
 
+    /* Add to every descendant that should stretch to fill. */
+    .StretchingFlexColumn {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     .Templates {
       grid-area: Templates;
     }
@@ -189,16 +196,18 @@ class ToboBuilderElement extends LitElement {
         text-align: center;
       }
       .Column {
-        flex-grow: 1;
+        flex-basis: 1px;
       }
     }
 
     .TodoList {
+      flex-grow: 1;
       padding: 12px;
       gap: 12px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      grid-template-rows: 1fr;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      align-content: flex-start;
       overflow: hidden;
 
       background: var(--ha-card-background, var(--card-background-color, #fff));
@@ -216,6 +225,7 @@ class ToboBuilderElement extends LitElement {
       font-style: italic;
       padding: 16px;
       grid-column: 1/-1; /* Span all columns */
+      place-self: center;
       &:not(:only-child) {
         display: none;
       }
@@ -223,18 +233,18 @@ class ToboBuilderElement extends LitElement {
   `;
 
   private addItemToDay(
-item: TodoItemWithEntity,
-day: DaySection,
+    item: TodoItemWithEntity,
+    day: DaySection,
     previousUid?: string,
-) {
+  ) {
     const detail: UpdateItemDetail = {
-          item,
-          targetEntity: this.targetListId,
-          due: day.date,
-          status: day.status,
-previousUid,
-        complete: Promise.resolve(),
-      };
+      item,
+      targetEntity: this.targetListId,
+      due: day.date,
+      status: day.status,
+      previousUid,
+      complete: Promise.resolve(),
+    };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
     // If the operation fails, reset the SortableJS DOM.
     detail.complete.catch(() => (this.renderVersion = "Error"));
@@ -252,7 +262,7 @@ previousUid,
       <div class="LongTerm"></div>
       <div class="Days">
         ${[...this.daySections].map(
-          (sections) => html`<div class="Column">
+          (sections) => html`<div class="Column StretchingFlexColumn">
             ${sections.map((section) => this.renderSection(section))}
           </div>`,
         )}
@@ -262,18 +272,21 @@ previousUid,
 
   private renderSection(section: DaySection) {
     return html`<div
-      class="Day"
+      class="Day StretchingFlexColumn"
       @item-added=${(
-e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
-) =>
+        e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
+      ) =>
         this.addItemToDay(
-e.detail.data,
+          e.detail.data,
           section,
-section.items[e.detail.index - 1]?.uid,
-)}
+          section.items[e.detail.index - 1]?.uid,
+        )}
     >
       <h3>${section.label}</h3>
-      ${this.renderThumbnailList(section)}
+      ${this.renderThumbnailList({
+        ...section,
+        className: "StretchingFlexColumn",
+      })}
     </div>`;
   }
 
@@ -290,29 +303,29 @@ section.items[e.detail.index - 1]?.uid,
   }) {
     return keyed(
       this.renderVersion,
-html`<ha-sortable
-      class=${ifDefined(className)}
-@item-moved=${(
+      html`<ha-sortable
+        class=${ifDefined(className)}
+        @item-moved=${(
           e: CustomEvent<{ newIndex: number; oldIndex: number }>,
         ) => this.onItemMoved(items, e.detail.oldIndex, e.detail.newIndex)}
-      draggable-selector="todo-thumbnail-card"
-            .group=${group}
-      ?rollback=${false}
-    >
-      <div class="TodoList">
-        ${repeat(
-          items,
-          (item) => item.uid,
-          (item) =>
-            html`<todo-thumbnail-card
-              item-json=${JSON.stringify(item)}
-              .sortableData=${item}
-            >
-            </todo-thumbnail-card>`,
-        )}
-        <div class="EmptyMessage">${emptyMessage}</div>
-      </div>
-    </ha-sortable>`,
+        draggable-selector="todo-thumbnail-card"
+        .group=${group}
+        ?rollback=${false}
+      >
+        <div class="TodoList">
+          ${repeat(
+            items,
+            (item) => item.uid,
+            (item) =>
+              html`<todo-thumbnail-card
+                item-json=${JSON.stringify(item)}
+                .sortableData=${item}
+              >
+              </todo-thumbnail-card>`,
+          )}
+          <div class="EmptyMessage">${emptyMessage}</div>
+        </div>
+      </ha-sortable>`,
     );
   }
 

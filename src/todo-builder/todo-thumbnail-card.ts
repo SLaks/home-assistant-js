@@ -26,7 +26,14 @@ class TodoThumbnailCard extends LitElement {
   }
 
   static styles = css`
+    :host {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      max-width: 150px;
+    }
     .Root {
+      flex-grow: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -76,9 +83,9 @@ class TodoThumbnailCard extends LitElement {
   `;
 
   protected override render(): unknown {
-if (!this.item) return;
+    if (!this.item) return;
     const isCompleted = this.item.status === "completed";
-const isUrgent = isItemUrgent(this.item);
+    const isUrgent = isItemUrgent(this.item);
     const isSnoozed = isSnoozedLaterToday(this.item);
     let icon = "";
     if (isCompleted) icon = "mdi:check-circle";
@@ -90,7 +97,7 @@ const isUrgent = isItemUrgent(this.item);
         class=${classMap({
           Root: true,
           isCompleted,
-isUrgent,
+          isUrgent,
           isSnoozed,
         })}
       >
