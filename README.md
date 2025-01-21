@@ -42,72 +42,74 @@ To do this:
 
         ```yaml
         alias: "Popup Cards: Populate todo emojis"
-        mode: restart
+        description: ""
         triggers:
-        - trigger: state
+          - trigger: state
             entity_id:
-            - todo.your_tasks
-        - trigger: time_pattern
+              - todo.aviva_tasks
+              - todo.dev_todo_system
+          - trigger: time_pattern
             minutes: /30
         conditions: []
         actions:
-        - action: todo.get_items
+          - action: todo.get_items
             metadata: {}
             data:
-            status: needs_action
+              status: needs_action
             target:
-            entity_id:
-                - todo.your_tasks
+              entity_id:
+                - todo.aviva_tasks
+                - todo.dev_todo_system
             response_variable: todos
-        - repeat:
-            sequence:
+          - repeat:
+              sequence:
                 - variables:
                     todo_entity_id: "{{ repeat.item }}"
                 - repeat:
                     sequence:
-                    - variables:
-                        details: "{{ repeat.item.description | default('{}') | from_json }}"
-                        generated_from: "v1: {{ repeat.item.summary }}"
-                    - alias: If we need an emoji
+                      - variables:
+                          details: "{{ repeat.item.description | default('{}') | from_json }}"
+                          generated_from: "v1: {{ repeat.item.summary }}"
+                      - alias: If we need an emoji
                         if:
-                        - condition: template
+                          - condition: template
                             value_template: |-
-                            {{
-                                repeat.item.status == 'needs_action'
+                              {{ 
+                                repeat.item.status == 'needs_action' 
                                 and (
-                                'emoji' not in details
-                                or details.generated_from != generated_from
+                                  'emoji' not in details 
+                                  or details.generated_from != generated_from 
                                 )
-                            }}
+                              }}
                         then:
-                        - action: google_generative_ai_conversation.generate_content
+                          - action: google_generative_ai_conversation.generate_content
                             metadata: {}
                             data:
-                            prompt: >-
+                              prompt: >-
                                 Pick an emoji for the task "{{ repeat.item.summary }}".
 
                                 Your response should consist of one or two emoji
                                 characters and no other text
                             response_variable: ai
-                        - action: todo.update_item
+                          - action: todo.update_item
                             metadata: {}
                             data: |
-                            {#
+                              {# 
                                 If I pass item: {{ template }} as YAML,
                                 the template result gets trimmed, which
                                 breaks if there is trailing whitespace.
-                            #}
-                            {{ {
+                              #}
+                              {{ {
                                 "item": repeat.item.summary,
-                                "description": dict(details,  **{
-                                'generated_from': generated_from,
-                                'emoji': ai.text | trim
+                                "description": dict(details,  **{ 
+                                  'generated_from': generated_from, 
+                                  'emoji': ai.text | trim 
                                 }) | to_json,
-                            } }}
+                              } }}
                             target:
-                            entity_id: "{{ todo_entity_id }}"
+                              entity_id: "{{ todo_entity_id }}"
                     for_each: "{{ todos[todo_entity_id]['items'] }}"
-            for_each: "{{ todos | list }}"
+              for_each: "{{ todos | list }}"
         ```
 
         </details>
