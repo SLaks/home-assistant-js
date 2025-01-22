@@ -1,8 +1,9 @@
+import "./add-todo-field";
+import "./todo-thumbnail-card";
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
-import "./todo-thumbnail-card";
 import { repeat } from "lit/directives/repeat.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { TodoItemWithEntity } from "../todos/subscriber";
@@ -331,7 +332,7 @@ class ToboBuilderElement extends LitElement {
   private renderLongTerm() {
     return html`
       <div
-        class="LongTerm StretchingFlexColumn"
+        class="LongTerm StretchingFlexColumn Panel"
         @item-added=${(
           e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
         ) =>
@@ -340,14 +341,12 @@ class ToboBuilderElement extends LitElement {
             this.longTermList[e.detail.index - 1]?.uid,
           )}
       >
+<add-todo-field .entityId=${this.longTermListId}></add-todo-field>
+
         ${this.renderTodoList({
           items: this.longTermList,
           className: "StretchingFlexColumn",
-          content: html`<mwc-list
-            wrapFocus
-            multi
-            class="Panel StretchingFlexColumn"
-          >
+          content: html`<mwc-list wrapFocus multi class="StretchingFlexColumn">
             ${this.longTermList.map((item) => this.renderCheckableItem(item))}
             <ha-list-item disabled class="EmptyMessage">
               No long-term tasks!

@@ -129,9 +129,11 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
           // Todos cannot be created as completed.
           item.status === TodoItemStatus.NeedsAction &&
           item.summary === insertedItem.summary &&
-          item.description === insertedItem.description &&
-          new Date(item.due!).toISOString() ===
-            new Date(insertedItem.due!).toISOString(),
+          // If the inserted item has no descrption, don't match that, in case
+          // an automation added a description.
+          (!item.description ||
+            item.description === insertedItem.description) &&
+          normalizeDueDate(item.due) === normalizeDueDate(insertedItem.due),
       );
       if (!createdItem) {
         await new Promise((r) => setTimeout(r, (i + 1) * 100));
@@ -193,3 +195,8 @@ window.customCards.push({
   description: "Adds items from templates or long-term tasks to a todo list.",
 });
 customElements.define("todo-builder-card", TodoBuilderCardElement);
+
+function normalizeDueDate(due: string | undefined | null): number | null {
+  if (!due) return null;
+  return +new Date(due);
+}
