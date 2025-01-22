@@ -81,6 +81,12 @@ class ToboBuilderElement extends LitElement {
     this.daySections = this.groupDays();
   }
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    if (changedProperties.has("templateList")) {
+      this.templateList = this.templateList.filter(
+        (item) => item.status === TodoItemStatus.NeedsAction,
+      );
+    }
+
     if (
       changedProperties.has("targetList") ||
       changedProperties.has("targetDays")
@@ -91,6 +97,16 @@ class ToboBuilderElement extends LitElement {
     // Rerender on all changes to the long term list, including reordering.
     // This fixes ghost ripple effects.
     if (changedProperties.has("longTermList")) {
+      const today = dayjs().startOf("day").toDate();
+      // Drop items that were completed yesterday.
+      // Also drop items with no recorded completion date.
+      // We don't care about the timestamp.
+      this.longTermList = this.longTermList.filter(
+        (item) =>
+          item.status === TodoItemStatus.NeedsAction ||
+          new Date(item.due!) > today,
+      );
+
       // Just change on every render.  Using the count ignores reordering.
       this.renderVersion = this.longTermList.map((item) => item.uid).join();
     }
