@@ -29,11 +29,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   templateListId?: string;
 
   @state()
-  targetList?: TodoItemWithEntity[];
-  @state()
-  templateList?: TodoItemWithEntity[];
-  @state()
-  longTermList?: TodoItemWithEntity[];
+  lists = new Map<string | undefined, TodoItemWithEntity[]>();
   @state()
   targetDays?: DateOption[];
 
@@ -126,7 +122,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   /** Sets the `uid` field of an just-inserted item, finding the inserted item in the list. */
   private async setNewItemUid(insertedItem: TodoItemWithEntity) {
     for (let i = 0; i < 5; i++) {
-      const createdItem = this.targetList?.find(
+      const createdItem = this.lists.get(insertedItem.entityId)?.findLast(
         (item) =>
           // Todos cannot be created as completed.
           item.status === TodoItemStatus.NeedsAction &&
@@ -153,36 +149,32 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
       <todo-builder
         long-term-list-id=${ifDefined(this.longTermListId)}
         target-list-id=${ifDefined(this.targetListId)}
-        .targetList=${this.targetList || []}
-        .templateList=${this.templateList || []}
-        .longTermList=${this.longTermList || []}
+        .targetList=${this.lists.get(this.targetListId) || []}
+        .templateList=${this.lists.get(this.templateListId) || []}
+        .longTermList=${this.lists.get(this.longTermListId) || []}
         .targetDays=${this.targetDays || []}
         @update-todo=${this.updateTodo}
       ></todo-builder>
+${[this.targetListId, this.templateListId, this.longTermListId].map(
+        (id) =>
+          id &&
+          html`
+            <todo-items-subscriber
+              .hass=${this.hass}
+              entity-id=${id}
+              @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) => {
+                this.lists.set(id, e.detail);
+                this.requestUpdate();
+              }}
+            ></todo-items-subscriber>
+          `,
+      )}
       <todo-target-days
         .hass=${this.hass}
         @target-days-updated=${(e: CustomEvent<TodoTargetDetails>) =>
           (this.targetDays = e.detail.fullWeek)}
       ></todo-target-days>
-      <todo-items-subscriber
-        .hass=${this.hass}
-        entity-id=${ifDefined(this.targetListId)}
-        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
-          (this.targetList = e.detail)}
-      ></todo-items-subscriber>
-      <todo-items-subscriber
-        .hass=${this.hass}
-        entity-id=${ifDefined(this.longTermListId)}
-        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
-          (this.longTermList = e.detail)}
-      ></todo-items-subscriber>
-      <todo-items-subscriber
-        .hass=${this.hass}
-        entity-id=${ifDefined(this.templateListId)}
-        @items-updated=${(e: CustomEvent<TodoItemWithEntity[]>) =>
-          (this.templateList = e.detail)}
-      ></todo-items-subscriber>
-    `;
+          `;
   }
 }
 
