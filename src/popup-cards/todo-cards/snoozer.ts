@@ -1,7 +1,6 @@
 import "./target-days";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
-import { applyDueTimestamp } from "./due-times";
 import { css, html, LitElement } from "lit";
 import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";

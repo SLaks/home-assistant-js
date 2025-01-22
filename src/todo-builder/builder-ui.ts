@@ -317,7 +317,19 @@ class ToboBuilderElement extends LitElement {
           emptyMessage: "No templates defined",
         }),
       })}
+      ${this.renderLongTerm()}
+      <div class="Days">
+        ${[...this.daySections].map(
+          (sections) => html`<div class="Column Panel">
+            ${sections.map((section) => this.renderSection(section))}
+          </div>`,
+        )}
+      </div>
+    `;
+  }
 
+  private renderLongTerm() {
+    return html`
       <div
         class="LongTerm StretchingFlexColumn"
         @item-added=${(
@@ -342,14 +354,6 @@ class ToboBuilderElement extends LitElement {
             </ha-list-item>
           </mwc-list> `,
         })}
-      </div>
-
-      <div class="Days">
-        ${[...this.daySections].map(
-          (sections) => html`<div class="Column Panel">
-            ${sections.map((section) => this.renderSection(section))}
-          </div>`,
-        )}
       </div>
     `;
   }
