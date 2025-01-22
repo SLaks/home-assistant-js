@@ -34,14 +34,14 @@ export interface UpdateItemDetail {
   complete: Promise<unknown>;
 }
 
-/** A single list/drop target in the lower panel. */
+/** A single list/drop target in the lower pane. */
 interface DaySection extends DateOption {
   /** The status to apply to items dropped here. */
   status: TodoItemStatus;
   items: TodoItemWithEntity[];
   emptyMessage: string;
 }
-/** A column in the lower panel, with one or (for today) more lists. */
+/** A panel in the lower pane, with one or (for today) more lists. */
 type DayColumn = DaySection[];
 
 class ToboBuilderElement extends LitElement {
@@ -76,7 +76,7 @@ class ToboBuilderElement extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (!this.targetDays.length) return;
-    this.daySections = this.groupItems();
+    this.daySections = this.groupDays();
   }
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     if (
@@ -84,10 +84,11 @@ class ToboBuilderElement extends LitElement {
       changedProperties.has("targetDays")
     ) {
       if (!this.targetDays.length) return;
-      this.daySections = this.groupItems();
+      this.daySections = this.groupDays();
     }
   }
-  private groupItems(): DayColumn[] {
+
+  private groupDays(): DayColumn[] {
     const columns: DayColumn[] = [];
     // Add past days before the first snooze option.
     const today = dayjs().startOf("day");
@@ -262,31 +263,16 @@ class ToboBuilderElement extends LitElement {
     }
   `;
 
-  private addItemToDay(
-    item: TodoItemWithEntity,
-    day: DaySection,
-    previousUid?: string,
-  ) {
-    const detail: UpdateItemDetail = {
-      item,
-      targetEntity: this.targetListId,
-      due: day.date,
-      status: day.status,
-      previousUid,
-      complete: Promise.resolve(),
-    };
-    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-    // If the operation fails, reset the SortableJS DOM.
-    detail.complete.catch(() => (this.renderVersion = "Error"));
-  }
-
   override render() {
     return html`
-      ${this.renderThumbnailList({
+      ${this.renderTodoList({
         items: this.templateList,
-        emptyMessage: "No templates defined",
-        className: "Templates Panel",
+                className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
+        content: renderThumbnailList({
+          items: this.templateList,
+          emptyMessage: "No templates defined",
+        }),
       })}
 
       <div class="LongTerm"></div>
@@ -313,23 +299,24 @@ class ToboBuilderElement extends LitElement {
         )}
     >
       <h3>${section.label}</h3>
-      ${this.renderThumbnailList({
+      ${this.renderTodoList({
         ...section,
         className: "StretchingFlexColumn",
+        content: renderThumbnailList(section),
       })}
     </div>`;
   }
 
-  private renderThumbnailList({
+  private renderTodoList({
     items,
-    emptyMessage,
-    className,
+        className,
     group = "builder-todos",
+    content,
   }: {
     items: readonly TodoItemWithEntity[];
-    emptyMessage: string;
-    className?: string;
+        className?: string;
     group?: string | object;
+    content: unknown;
   }) {
     return keyed(
       this.renderVersion,
@@ -338,25 +325,31 @@ class ToboBuilderElement extends LitElement {
         @item-moved=${(
           e: CustomEvent<{ newIndex: number; oldIndex: number }>,
         ) => this.onItemMoved(items, e.detail.oldIndex, e.detail.newIndex)}
-        draggable-selector="todo-thumbnail-card"
+        draggable-selector=".Draggable"
         .group=${group}
         ?rollback=${false}
       >
-        <div class="TodoList">
-          ${repeat(
-            items,
-            (item) => item.uid,
-            (item) =>
-              html`<todo-thumbnail-card
-                item-json=${JSON.stringify(item)}
-                .sortableData=${item}
-              >
-              </todo-thumbnail-card>`,
-          )}
-          <div class="EmptyMessage">${emptyMessage}</div>
-        </div>
+        ${content}
       </ha-sortable>`,
     );
+  }
+
+  private addItemToDay(
+    item: TodoItemWithEntity,
+    day: DaySection,
+    previousUid?: string,
+  ) {
+    const detail: UpdateItemDetail = {
+      item,
+      targetEntity: this.targetListId,
+      due: day.date,
+      status: day.status,
+      previousUid,
+      complete: Promise.resolve(),
+    };
+    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
+    // If the operation fails, reset the SortableJS DOM.
+    detail.complete.catch(() => (this.renderVersion = "Error"));
   }
 
   onItemMoved(
@@ -386,6 +379,27 @@ class ToboBuilderElement extends LitElement {
       }),
     );
   }
+}
+
+function renderThumbnailList({
+  items,
+  emptyMessage,
+}: {
+  items: readonly TodoItemWithEntity[];
+  emptyMessage: string;
+}) {
+  return html`<div class="TodoList">
+    ${repeat(items, (item) => item.uid, renderTodoThumbnail)}
+    <div class="EmptyMessage">${emptyMessage}</div>
+  </div>`;
+}
+function renderTodoThumbnail(item: TodoItemWithEntity) {
+  return html`<todo-thumbnail-card
+    item-json=${JSON.stringify(item)}
+    .sortableData=${item}
+class="Draggable"
+  >
+  </todo-thumbnail-card>`;
 }
 
 customElements.define("todo-builder", ToboBuilderElement);
