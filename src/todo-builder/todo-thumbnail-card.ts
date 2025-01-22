@@ -30,7 +30,6 @@ class TodoThumbnailCard extends LitElement {
       display: flex;
       flex-direction: column;
       align-self: stretch;
-      max-width: 150px;
     }
     .Root {
       flex-grow: 1;

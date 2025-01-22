@@ -113,6 +113,16 @@ class ToboBuilderElement extends LitElement {
     columns.push([
       {
         date: today.toDate(),
+        label: "Done Today",
+        status: TodoItemStatus.Completed,
+        emptyMessage: "Drop completed todos here",
+        items: this.targetList.filter(
+          (item) =>
+            item.status === "completed" && today.isSame(item.due, "day"),
+        ),
+      },
+      {
+        date: today.toDate(),
         label: "Today",
         status: TodoItemStatus.NeedsAction,
         emptyMessage: "Drop today's tasks items here",
@@ -122,16 +132,6 @@ class ToboBuilderElement extends LitElement {
             // Include uncompleted items due in the past.
             // Also include items with no due date.
             !dayjs(item.due || new Date()).isAfter(today, "day"),
-        ),
-      },
-      {
-        date: today.toDate(),
-        label: "Completed",
-        status: TodoItemStatus.Completed,
-        emptyMessage: "Drop completed todos here",
-        items: this.targetList.filter(
-          (item) =>
-            item.status === "completed" && today.isSame(item.due, "day"),
         ),
       },
     ]);
@@ -166,6 +166,9 @@ class ToboBuilderElement extends LitElement {
       grid-template-columns: 1fr min-content;
       grid-template-rows: min-content 3fr;
       padding: 8px;
+      gap: var(--panel-gap);
+
+      --panel-gap: 12px;
 
       /* Restore card styling overridden for panel views. */
       --ha-card-border-radius: var(--restore-card-border-radius, 12px);
@@ -180,8 +183,22 @@ class ToboBuilderElement extends LitElement {
       flex-direction: column;
     }
 
+    .Panel {
+      background: var(--ha-card-background, var(--card-background-color, #fff));
+      backdrop-filter: var(--ha-card-backdrop-filter, none);
+      box-shadow: var(--ha-card-box-shadow, none);
+      border-radius: var(--ha-card-border-radius, 12px);
+      border-width: var(--ha-card-border-width, 1px);
+      border-style: solid;
+      border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+      color: var(--primary-text-color);
+    }
+
     .Templates {
       grid-area: Templates;
+      todo-thumbnail-card {
+        max-width: 150px;
+      }
     }
     .LongTerm {
       grid-area: LongTerm;
@@ -191,12 +208,34 @@ class ToboBuilderElement extends LitElement {
       display: flex;
       justify-content: stretch;
       align-items: stretch;
-      gap: 12px;
+      gap: var(--panel-gap);
       h3 {
         text-align: center;
+        margin: 8px -8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--primary-background-color, #e0e0e0);
+        margin-bottom: 6px;
       }
       .Column {
-        flex-basis: 1px;
+        display: flex;
+        /* Make all columns equal width */
+        flex-grow: 1;
+        flex-basis: 100px;
+        &:has(.Day + .Day) {
+          /* Elements with two columns should be twice as wide. */
+          flex-basis: 200px;
+          flex-grow: 2;
+        }
+        .Day {
+          padding: 8px;
+          flex-basis: 1px; /* Make adjacent columns equal width */
+          + .Day {
+            border-left: 1px solid var(--primary-background-color, #e0e0e0);
+            /* Decrease padding between adjacent columns. */
+            margin-left: -8px;
+            padding-left: 0px;
+          }
+        }
       }
     }
 
@@ -209,15 +248,6 @@ class ToboBuilderElement extends LitElement {
       align-items: stretch;
       align-content: flex-start;
       overflow: hidden;
-
-      background: var(--ha-card-background, var(--card-background-color, #fff));
-      backdrop-filter: var(--ha-card-backdrop-filter, none);
-      box-shadow: var(--ha-card-box-shadow, none);
-      border-radius: var(--ha-card-border-radius, 12px);
-      border-width: var(--ha-card-border-width, 1px);
-      border-style: solid;
-      border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
-      color: var(--primary-text-color);
     }
 
     .EmptyMessage {
@@ -255,14 +285,14 @@ class ToboBuilderElement extends LitElement {
       ${this.renderThumbnailList({
         items: this.templateList,
         emptyMessage: "No templates defined",
-        className: "Templates",
+        className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
       })}
 
       <div class="LongTerm"></div>
       <div class="Days">
         ${[...this.daySections].map(
-          (sections) => html`<div class="Column StretchingFlexColumn">
+          (sections) => html`<div class="Column Panel">
             ${sections.map((section) => this.renderSection(section))}
           </div>`,
         )}
