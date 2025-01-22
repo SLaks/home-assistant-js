@@ -1,4 +1,4 @@
-import { css, html, LitElement, PropertyValues } from "lit";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { DateOption } from "../popup-cards/todo-cards/target-days";
 import dayjs from "dayjs";
@@ -8,7 +8,8 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import { TodoItemWithEntity } from "../todos/subscriber";
 import { TodoItemStatus } from "../todos/ha-api";
 import { keyed } from "lit/directives/keyed.js";
-
+import { HomeAssistant } from "custom-card-helpers/dist/types";
+import { computeDueTimestamp } from "../popup-cards/todo-cards/due-times";
 
 type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -45,6 +46,7 @@ interface DaySection extends DateOption {
 type DayColumn = DaySection[];
 
 class ToboBuilderElement extends LitElement {
+  @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: "target-list-id" })
   targetListId: string = "";
   @property({ attribute: "long-term-list-id" })
@@ -85,6 +87,12 @@ class ToboBuilderElement extends LitElement {
     ) {
       if (!this.targetDays.length) return;
       this.daySections = this.groupDays();
+    }
+    // Rerender on all changes to the long term list, including reordering.
+    // This fixes ghost ripple effects.
+    if (changedProperties.has("longTermList")) {
+      // Just change on every render.  Using the count ignores reordering.
+      this.renderVersion = this.longTermList.map((item) => item.uid).join();
     }
   }
 
@@ -203,6 +211,16 @@ class ToboBuilderElement extends LitElement {
     }
     .LongTerm {
       grid-area: LongTerm;
+      .CompletedLabel {
+        font-style: italic;
+        color: #388e3c;
+      }
+
+      /* When dropping: */
+      todo-thumbnail-card {
+        width: 150px;
+        margin: 12px;
+      }
     }
     .Days {
       grid-area: Days;
@@ -249,12 +267,21 @@ class ToboBuilderElement extends LitElement {
       align-items: stretch;
       align-content: flex-start;
       overflow: hidden;
+
+      .EmptyMessage {
+        padding: 16px;
+      }
+
+      /* When dropping: */
+      ha-check-list-item {
+        width: 100%;
+      }
     }
 
     .EmptyMessage {
+      color: inherit;
       text-align: center;
       font-style: italic;
-      padding: 16px;
       grid-column: 1/-1; /* Span all columns */
       place-self: center;
       &:not(:only-child) {
@@ -267,7 +294,7 @@ class ToboBuilderElement extends LitElement {
     return html`
       ${this.renderTodoList({
         items: this.templateList,
-                className: "Templates Panel",
+        className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
         content: renderThumbnailList({
           items: this.templateList,
@@ -275,7 +302,32 @@ class ToboBuilderElement extends LitElement {
         }),
       })}
 
-      <div class="LongTerm"></div>
+      <div
+        class="LongTerm StretchingFlexColumn"
+        @item-added=${(
+          e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
+        ) =>
+          this.addItemToLongTerm(
+            e.detail.data,
+            this.longTermList[e.detail.index - 1]?.uid,
+          )}
+      >
+        ${this.renderTodoList({
+          items: this.longTermList,
+          className: "StretchingFlexColumn",
+          content: html`<mwc-list
+            wrapFocus
+            multi
+            class="Panel StretchingFlexColumn"
+          >
+            ${this.longTermList.map((item) => this.renderCheckableItem(item))}
+            <ha-list-item disabled class="EmptyMessage">
+              No long-term tasks!
+            </ha-list-item>
+          </mwc-list> `,
+        })}
+      </div>
+
       <div class="Days">
         ${[...this.daySections].map(
           (sections) => html`<div class="Column Panel">
@@ -309,12 +361,12 @@ class ToboBuilderElement extends LitElement {
 
   private renderTodoList({
     items,
-        className,
+    className,
     group = "builder-todos",
     content,
   }: {
     items: readonly TodoItemWithEntity[];
-        className?: string;
+    className?: string;
     group?: string | object;
     content: unknown;
   }) {
@@ -332,6 +384,67 @@ class ToboBuilderElement extends LitElement {
         ${content}
       </ha-sortable>`,
     );
+  }
+
+  private renderCheckableItem(item: TodoItemWithEntity) {
+    const isComplete = item.status === TodoItemStatus.Completed;
+    let lowerContent: unknown = nothing;
+    if (isComplete) {
+      lowerContent = html`<div class="CompletedLabel">
+        Done
+        <ha-relative-time
+          .hass=${this.hass}
+          .datetime=${computeDueTimestamp(item)}
+        >
+        </ha-relative-time>
+      </div>`;
+    }
+    return html`
+      <ha-check-list-item
+        left
+        .hasMeta=${isComplete}
+        .selected=${isComplete}
+        @change=${() => this.toggleItem(item)}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") this.toggleItem(item);
+        }}
+        .sortableData=${item}
+        class="Draggable"
+      >
+        <div class="Description">${item.summary} ${lowerContent}</div>
+      </ha-check-list-item>
+    `;
+  }
+
+  toggleItem(item: TodoItemWithEntity) {
+    const isComplete = item.status === TodoItemStatus.Completed;
+    const detail: UpdateItemDetail = {
+      item,
+      targetEntity: item.entityId,
+      status: isComplete
+        ? TodoItemStatus.NeedsAction
+        : TodoItemStatus.Completed,
+      // Record the completion time.
+      due: isComplete ? new Date() : undefined,
+      complete: Promise.resolve(),
+    };
+    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
+    // If the operation fails, reset the SortableJS DOM.
+    detail.complete.catch(() => (this.renderVersion = "Error"));
+  }
+
+  private addItemToLongTerm(item: TodoItemWithEntity, previousUid?: string) {
+    const detail: UpdateItemDetail = {
+      item,
+      targetEntity: this.longTermListId,
+      due: undefined, // Always clear the due date.
+      status: TodoItemStatus.NeedsAction,
+      previousUid,
+      complete: Promise.resolve(),
+    };
+    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
+    // If the operation fails, reset the SortableJS DOM.
+    detail.complete.catch(() => (this.renderVersion = "Error"));
   }
 
   private addItemToDay(
@@ -397,7 +510,7 @@ function renderTodoThumbnail(item: TodoItemWithEntity) {
   return html`<todo-thumbnail-card
     item-json=${JSON.stringify(item)}
     .sortableData=${item}
-class="Draggable"
+    class="Draggable"
   >
   </todo-thumbnail-card>`;
 }

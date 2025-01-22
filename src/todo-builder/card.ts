@@ -104,14 +104,16 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         }
       }
 
-      promises.push(
-        moveItem(
-          this.hass!,
-          e.detail.targetEntity,
-          updatedItem.uid,
-          e.detail.previousUid,
-        ),
-      );
+      if ("previousUid" in e.detail) {
+        promises.push(
+          moveItem(
+            this.hass!,
+            e.detail.targetEntity,
+            updatedItem.uid,
+            e.detail.previousUid,
+          ),
+        );
+      }
       e.detail.complete = Promise.all(promises);
       await e.detail.complete;
     } finally {
@@ -153,9 +155,10 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         .templateList=${this.lists.get(this.templateListId) || []}
         .longTermList=${this.lists.get(this.longTermListId) || []}
         .targetDays=${this.targetDays || []}
+        .hass=${this.hass}
         @update-todo=${this.updateTodo}
       ></todo-builder>
-${[this.targetListId, this.templateListId, this.longTermListId].map(
+      ${[this.targetListId, this.templateListId, this.longTermListId].map(
         (id) =>
           id &&
           html`
@@ -174,7 +177,7 @@ ${[this.targetListId, this.templateListId, this.longTermListId].map(
         @target-days-updated=${(e: CustomEvent<TodoTargetDetails>) =>
           (this.targetDays = e.detail.fullWeek)}
       ></todo-target-days>
-          `;
+    `;
   }
 }
 
