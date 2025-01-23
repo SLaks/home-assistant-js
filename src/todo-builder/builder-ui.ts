@@ -367,7 +367,13 @@ class ToboBuilderElement extends LitElement {
             this.longTermList[e.detail.index - 1]?.uid,
           )}
       >
-        <add-todo-field .entityId=${this.longTermListId}></add-todo-field>
+        <add-todo-field
+          .args=${{
+            targetEntity: this.longTermListId,
+            status: TodoItemStatus.NeedsAction,
+          }}
+          placeholder="Add long-term task"
+        ></add-todo-field>
 
         ${this.renderTodoList({
           key: this.longTermRenderHash,
@@ -398,6 +404,20 @@ class ToboBuilderElement extends LitElement {
   }
 
   private renderSection(section: DaySection) {
+    let addField: unknown = nothing;
+    if (section.status === TodoItemStatus.NeedsAction) {
+      addField = html`<add-todo-field
+        .args=${{
+          targetEntity: this.targetListId,
+          status: TodoItemStatus.NeedsAction,
+          due: section.date,
+        }}
+        placeholder=${`Add task due ${
+          section.label === "Today" ? "today" : section.label
+        }`}
+      ></add-todo-field>`;
+    }
+
     return html`<div
       class="Day StretchingFlexColumn"
       @item-added=${(
@@ -410,6 +430,7 @@ class ToboBuilderElement extends LitElement {
         )}
     >
       <h3>${section.label}</h3>
+      ${addField}
       ${this.renderTodoList({
         ...section,
         // Only recreate each day when items are added or removed.

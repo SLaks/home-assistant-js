@@ -4,8 +4,11 @@ import { UpdateItemDetail } from "./builder-ui";
 import { TodoItemStatus } from "../todos/ha-api";
 
 class AddTodoFieldElement extends LitElement {
-  @property({ type: String, attribute: "entity-id" })
-  entityId?: string;
+  @property({ attribute: false })
+  args?: Pick<UpdateItemDetail, "due" | "status" | "targetEntity">;
+
+  @property({ type: String })
+  placeholder: string = "Add todo";
 
   static styles = css`
     :host {
@@ -22,8 +25,8 @@ class AddTodoFieldElement extends LitElement {
     ha-icon-button {
       position: absolute;
       inset-inline-start: initial;
-      inset-inline-end: 19px;
-      right: 19px;
+      inset-inline-end: 27px;
+      right: 27px;
     }
 
     .buttonIcon {
@@ -37,7 +40,7 @@ class AddTodoFieldElement extends LitElement {
     return html`
       <ha-textfield
         class="addBox"
-        placeholder="Add long-term task"
+        placeholder=${this.placeholder}
         @keydown=${this._addKeyPress}
       ></ha-textfield>
       <ha-icon-button class="addButton" title="Add" @click=${this.addItem}>
@@ -63,8 +66,7 @@ class AddTodoFieldElement extends LitElement {
               uid: "",
               status: TodoItemStatus.NeedsAction,
             },
-            status: TodoItemStatus.NeedsAction,
-            targetEntity: this.entityId!,
+            ...this.args!,
           },
           bubbles: true,
           composed: true,
