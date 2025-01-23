@@ -32,7 +32,7 @@ export interface UpdateItemDetail {
   readonly targetEntity: string;
   /** The `.uid` of the item that the new item should be placed after. */
   previousUid?: string;
-  }
+}
 
 /** A single list/drop target in the lower pane. */
 interface DaySection extends DateOption {
@@ -71,7 +71,7 @@ class ToboBuilderElement extends LitElement {
    */
   @state()
   longTermRenderHash = "";
-/**
+  /**
    * Used to recreate all SortableJS DOM when dragging fails.
    * Otherwise, we get duplicate items, or items missing properties that cannot be dragged
    * a second time.
@@ -114,8 +114,8 @@ class ToboBuilderElement extends LitElement {
       // Recreate on reorder (to fix ripples) and add/remove (to fix item state).
       // Do not recreate on item completion, to preserve checkbox focus/animation.
       this.longTermRenderHash = this.longTermList
-.map((item) => item.uid)
-.join();
+        .map((item) => item.uid)
+        .join();
     }
   }
 
@@ -184,7 +184,7 @@ class ToboBuilderElement extends LitElement {
           },
         ]),
     );
-        return columns;
+    return columns;
   }
 
   static styles = css`
@@ -202,6 +202,21 @@ class ToboBuilderElement extends LitElement {
       --ha-card-border-radius: var(--restore-card-border-radius, 12px);
       --ha-card-border-width: var(--restore-card-border-width, 1px);
       --ha-card-box-shadow: var(--restore-card-box-shadow, none);
+    }
+
+    ::-webkit-scrollbar-track {
+      border-radius: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+      background-color: rgba(255, 255, 255, 0.3);
     }
 
     /* Add to every descendant that should stretch to fill. */
@@ -230,6 +245,12 @@ class ToboBuilderElement extends LitElement {
     }
     .LongTerm {
       grid-area: LongTerm;
+
+      ha-sortable {
+        overflow-y: auto;
+        max-height: 35vh;
+      }
+
       .CompletedLabel {
         font-style: italic;
         color: #388e3c;
@@ -313,7 +334,7 @@ class ToboBuilderElement extends LitElement {
     return html`
       ${this.renderTodoList({
         items: this.templateList,
-// Recreate when any item is dragged from the template list,
+        // Recreate when any item is dragged from the template list,
         // to fix bad SortableJS clones.
         key: this.targetList.length + this.longTermList.length,
         className: "Templates Panel",
@@ -346,10 +367,10 @@ class ToboBuilderElement extends LitElement {
             this.longTermList[e.detail.index - 1]?.uid,
           )}
       >
-<add-todo-field .entityId=${this.longTermListId}></add-todo-field>
+        <add-todo-field .entityId=${this.longTermListId}></add-todo-field>
 
         ${this.renderTodoList({
-key: this.longTermRenderHash,
+          key: this.longTermRenderHash,
           items: this.longTermList,
           className: "StretchingFlexColumn",
           content: html`<mwc-list wrapFocus multi class="StretchingFlexColumn">
@@ -358,6 +379,19 @@ key: this.longTermRenderHash,
               No long-term tasks!
             </ha-list-item>
           </mwc-list> `,
+          options: {
+            /** Return true to _cancel_ the drag. */
+            filter(e: PointerEvent, dragEl: HTMLElement) {
+              if (e.pointerType !== "touch") return false;
+              console.log(e);
+              const rect = dragEl.getBoundingClientRect();
+              const x = e.clientX - rect.x;
+              // Cancel drag if the user is dragging from the right half of the element.
+              // This allows scrolling.
+              if (x > rect.width / 2) return true;
+              return false;
+            },
+          },
         })}
       </div>
     `;
@@ -378,7 +412,7 @@ key: this.longTermRenderHash,
       <h3>${section.label}</h3>
       ${this.renderTodoList({
         ...section,
-// Only recreate each day when items are added or removed.
+        // Only recreate each day when items are added or removed.
         key: section.items.length,
         className: "StretchingFlexColumn",
         content: renderThumbnailList(section),
@@ -391,13 +425,15 @@ key: this.longTermRenderHash,
     className,
     group = "builder-todos",
     content,
-key,
+    key,
+    options,
   }: {
     items: readonly TodoItemWithEntity[];
     className?: string;
     group?: string | object;
     content: unknown;
-key: unknown;
+    key: unknown;
+    options?: unknown;
   }) {
     return keyed(
       `${this.forceRerender}-${key}`,
@@ -409,6 +445,7 @@ key: unknown;
         draggable-selector=".Draggable"
         .group=${group}
         ?rollback=${false}
+        .options=${options}
       >
         ${content}
       </ha-sortable>`,
@@ -455,9 +492,9 @@ key: unknown;
         : TodoItemStatus.Completed,
       // Record the completion time.
       due: isComplete ? new Date() : undefined,
-          };
+    };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-      }
+  }
 
   private addItemToLongTerm(item: TodoItemWithEntity, previousUid?: string) {
     const detail: UpdateItemDetail = {
@@ -466,9 +503,9 @@ key: unknown;
       due: undefined, // Always clear the due date.
       status: TodoItemStatus.NeedsAction,
       previousUid,
-          };
+    };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-      }
+  }
 
   private addItemToDay(
     item: TodoItemWithEntity,
@@ -481,9 +518,9 @@ key: unknown;
       due: day.date,
       status: day.status,
       previousUid,
-          };
+    };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-      }
+  }
 
   onItemMoved(
     items: readonly TodoItemWithEntity[],
@@ -507,7 +544,7 @@ key: unknown;
           targetEntity: item.entityId,
           status: item.status,
           previousUid: prevItem?.uid,
-                  },
+        },
       }),
     );
   }
