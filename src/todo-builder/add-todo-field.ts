@@ -65,7 +65,6 @@ class AddTodoFieldElement extends LitElement {
             },
             status: TodoItemStatus.NeedsAction,
             targetEntity: this.entityId!,
-            complete: Promise.resolve(),
           },
           bubbles: true,
           composed: true,

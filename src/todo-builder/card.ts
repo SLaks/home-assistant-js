@@ -41,6 +41,14 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
   @state()
   isSaving = false;
 
+  /**
+   * Used to recreate all SortableJS DOM when dragging fails.
+   * Otherwise, we get duplicate items, or items missing properties that cannot be dragged
+   * a second time.
+   */
+  @state()
+  forceRerender = 0;
+
   static getStubConfig(): CardConfig {
     return {
       target_list: "todo.my_tasks",
@@ -114,8 +122,17 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
           ),
         );
       }
-      e.detail.complete = Promise.all(promises);
-      await e.detail.complete;
+      await Promise.all(promises);
+    } catch (e) {
+      this.forceRerender++;
+      this.dispatchEvent(
+        new CustomEvent("hass-notification", {
+          composed: true,
+          detail: { message: (e as Error)?.message || "Error!" },
+        }),
+      );
+      console.error(e);
+      throw e;
     } finally {
       this.isSaving = false;
     }
@@ -151,6 +168,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
 
     return html`
       <todo-builder
+        force-rerender=${this.forceRerender}
         long-term-list-id=${ifDefined(this.longTermListId)}
         target-list-id=${ifDefined(this.targetListId)}
         .targetList=${this.lists.get(this.targetListId) || []}

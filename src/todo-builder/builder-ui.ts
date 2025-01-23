@@ -32,9 +32,7 @@ export interface UpdateItemDetail {
   readonly targetEntity: string;
   /** The `.uid` of the item that the new item should be placed after. */
   previousUid?: string;
-  /** Set by the event handler when all operations are complete. */
-  complete: Promise<unknown>;
-}
+  }
 
 /** A single list/drop target in the lower pane. */
 interface DaySection extends DateOption {
@@ -66,15 +64,20 @@ class ToboBuilderElement extends LitElement {
   daySections: DayColumn[] = [];
 
   /**
-   * Used to recreate the Sortables after dragging, to remove fake elements from SortableJS.
+   * Used to recreate the long-term SortableJS DOM when dragging fails.
    * Otherwise, we get duplicate items, or items missing properties that cannot be dragged
    * a second time.
-   * This value changes whenever an item is added or removed from any list.
-   * This includes dragging an item between days, which does not change the
-   * total count.
+   * This value changes whenever items are moved, added, or removed.
    */
   @state()
-  renderVersion = "";
+  longTermRenderHash = "";
+/**
+   * Used to recreate all SortableJS DOM when dragging fails.
+   * Otherwise, we get duplicate items, or items missing properties that cannot be dragged
+   * a second time.
+   */
+  @property({ type: Number, attribute: "force-rerender" })
+  forceRerender = 0;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -108,8 +111,11 @@ class ToboBuilderElement extends LitElement {
           new Date(item.due!) > today,
       );
 
-      // Just change on every render.  Using the count ignores reordering.
-      this.renderVersion = this.longTermList.map((item) => item.uid).join();
+      // Recreate on reorder (to fix ripples) and add/remove (to fix item state).
+      // Do not recreate on item completion, to preserve checkbox focus/animation.
+      this.longTermRenderHash = this.longTermList
+.map((item) => item.uid)
+.join();
     }
   }
 
@@ -178,11 +184,7 @@ class ToboBuilderElement extends LitElement {
           },
         ]),
     );
-    this.renderVersion = columns
-      .map((c) => c.map((s) => s.items.length).join())
-      .concat([this.longTermList.length.toString()])
-      .join();
-    return columns;
+        return columns;
   }
 
   static styles = css`
@@ -311,6 +313,9 @@ class ToboBuilderElement extends LitElement {
     return html`
       ${this.renderTodoList({
         items: this.templateList,
+// Recreate when any item is dragged from the template list,
+        // to fix bad SortableJS clones.
+        key: this.targetList.length + this.longTermList.length,
         className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
         content: renderThumbnailList({
@@ -344,6 +349,7 @@ class ToboBuilderElement extends LitElement {
 <add-todo-field .entityId=${this.longTermListId}></add-todo-field>
 
         ${this.renderTodoList({
+key: this.longTermRenderHash,
           items: this.longTermList,
           className: "StretchingFlexColumn",
           content: html`<mwc-list wrapFocus multi class="StretchingFlexColumn">
@@ -372,6 +378,8 @@ class ToboBuilderElement extends LitElement {
       <h3>${section.label}</h3>
       ${this.renderTodoList({
         ...section,
+// Only recreate each day when items are added or removed.
+        key: section.items.length,
         className: "StretchingFlexColumn",
         content: renderThumbnailList(section),
       })}
@@ -383,14 +391,16 @@ class ToboBuilderElement extends LitElement {
     className,
     group = "builder-todos",
     content,
+key,
   }: {
     items: readonly TodoItemWithEntity[];
     className?: string;
     group?: string | object;
     content: unknown;
+key: unknown;
   }) {
     return keyed(
-      this.renderVersion,
+      `${this.forceRerender}-${key}`,
       html`<ha-sortable
         class=${ifDefined(className)}
         @item-moved=${(
@@ -445,12 +455,9 @@ class ToboBuilderElement extends LitElement {
         : TodoItemStatus.Completed,
       // Record the completion time.
       due: isComplete ? new Date() : undefined,
-      complete: Promise.resolve(),
-    };
+          };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-    // If the operation fails, reset the SortableJS DOM.
-    detail.complete.catch(() => (this.renderVersion = "Error"));
-  }
+      }
 
   private addItemToLongTerm(item: TodoItemWithEntity, previousUid?: string) {
     const detail: UpdateItemDetail = {
@@ -459,12 +466,9 @@ class ToboBuilderElement extends LitElement {
       due: undefined, // Always clear the due date.
       status: TodoItemStatus.NeedsAction,
       previousUid,
-      complete: Promise.resolve(),
-    };
+          };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-    // If the operation fails, reset the SortableJS DOM.
-    detail.complete.catch(() => (this.renderVersion = "Error"));
-  }
+      }
 
   private addItemToDay(
     item: TodoItemWithEntity,
@@ -477,12 +481,9 @@ class ToboBuilderElement extends LitElement {
       due: day.date,
       status: day.status,
       previousUid,
-      complete: Promise.resolve(),
-    };
+          };
     this.dispatchEvent(new CustomEvent("update-todo", { detail }));
-    // If the operation fails, reset the SortableJS DOM.
-    detail.complete.catch(() => (this.renderVersion = "Error"));
-  }
+      }
 
   onItemMoved(
     items: readonly TodoItemWithEntity[],
@@ -506,8 +507,7 @@ class ToboBuilderElement extends LitElement {
           targetEntity: item.entityId,
           status: item.status,
           previousUid: prevItem?.uid,
-          complete: Promise.resolve(),
-        },
+                  },
       }),
     );
   }
