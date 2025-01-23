@@ -412,7 +412,7 @@ class ToboBuilderElement extends LitElement {
           status: TodoItemStatus.NeedsAction,
           due: section.date,
         }}
-        placeholder=${`Add task due ${
+        placeholder=${`Add task for ${
           section.label === "Today" ? "today" : section.label
         }`}
       ></add-todo-field>`;
