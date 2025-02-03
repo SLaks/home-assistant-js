@@ -392,7 +392,7 @@ class ToboBuilderElement extends LitElement {
         key: this.targetList.length + this.longTermList.length,
         className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
-        content: renderThumbnailList({
+        content: this.renderThumbnailList({
           items: this.templateList,
           emptyMessage: "No templates defined",
         }),
@@ -523,7 +523,7 @@ class ToboBuilderElement extends LitElement {
         // Only recreate each day when items are added or removed.
         key: section.items.length,
         className: "StretchingFlexColumn",
-        content: renderThumbnailList(section),
+        content: this.renderThumbnailList(section),
       })}
     </div>`;
   }
@@ -657,27 +657,32 @@ class ToboBuilderElement extends LitElement {
       }),
     );
   }
-}
 
-function renderThumbnailList({
-  items,
-  emptyMessage,
-}: {
-  items: readonly TodoItemWithEntity[];
-  emptyMessage: string;
-}) {
-  return html`<div class="TodoList">
-    ${repeat(items, (item) => item.uid, renderTodoThumbnail)}
-    <div class="EmptyMessage">${emptyMessage}</div>
-  </div>`;
-}
-function renderTodoThumbnail(item: TodoItemWithEntity) {
-  return html`<todo-thumbnail-card
-    item-json=${JSON.stringify(item)}
-    .sortableData=${item}
-    class="Draggable"
-  >
-  </todo-thumbnail-card>`;
+  private renderThumbnailList({
+    items,
+    emptyMessage,
+  }: {
+    items: readonly TodoItemWithEntity[];
+    emptyMessage: string;
+  }) {
+    return html`<div class="TodoList">
+      ${repeat(
+        items,
+        (item) => item.uid,
+        (item) => this.renderTodoThumbnail(item),
+      )}
+      <div class="EmptyMessage">${emptyMessage}</div>
+    </div>`;
+  }
+  private renderTodoThumbnail(item: TodoItemWithEntity) {
+    return html`<todo-thumbnail-card
+      .hass=${this.hass}
+      item-json=${JSON.stringify(item)}
+      .sortableData=${item}
+      class="Draggable"
+    >
+    </todo-thumbnail-card>`;
+  }
 }
 
 customElements.define("todo-builder", ToboBuilderElement);

@@ -50,7 +50,11 @@ class PopupTodoCard extends LitElement {
         ?is-completed=${this.item.status === TodoItemStatus.Completed}
         @click=${this.markCompleted}
       >
-        <popup-todo-icon slot="icon" .item=${this.item}></popup-todo-icon>
+        <popup-todo-icon
+          slot="icon"
+          .hass=${this.hass}
+          .item=${this.item}
+        ></popup-todo-icon>
         <div slot="name">${this.item.summary}</div>
         <popup-todo-snoozer
           slot="actions"

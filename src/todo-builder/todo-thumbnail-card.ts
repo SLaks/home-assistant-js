@@ -5,12 +5,15 @@ import "../popup-cards/todo-cards/todo-icon";
 import { classMap } from "lit/directives/class-map.js";
 import { isUrgent as isItemUrgent } from "../popup-cards/todo-cards/todo-actions";
 import { isSnoozedLaterToday } from "../popup-cards/todo-cards/due-times";
+import { HomeAssistant } from "custom-card-helpers/dist/types";
 
 class TodoThumbnailCard extends LitElement {
   // This element is dragged, so it must render entirely from attributes.
   // If it uses properties, Sortable's drag clones won't set the properties.
   @property({ attribute: "item-json" })
   itemJson?: string;
+
+  @property({ attribute: false }) hass?: HomeAssistant;
 
   @state()
   item?: TodoItem;
@@ -100,7 +103,10 @@ class TodoThumbnailCard extends LitElement {
           isSnoozed,
         })}
       >
-        <popup-todo-icon .item=${this.item}></popup-todo-icon>
+        <popup-todo-icon
+          .hass=${this.hass}
+          .item=${this.item}
+        ></popup-todo-icon>
         <div class="Name">${this.item?.summary}</div>
         ${icon ? html`<ha-icon icon=${icon}></ha-icon>` : nothing}
       </div>
