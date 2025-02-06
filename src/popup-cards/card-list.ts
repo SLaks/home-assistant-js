@@ -32,6 +32,8 @@ class PopupCardListElement extends LitElement {
   cardEntities: string[] = [];
   @property({ attribute: false, type: Array })
   todoItems: TodoItemWithEntity[] = [];
+  @state()
+  deletedTodos = new Set<string>();
 
   /** The number of visible cards, as filtered by the caller. */
   @property({ attribute: false })
@@ -99,6 +101,7 @@ class PopupCardListElement extends LitElement {
   private updateTodos() {
     for (const item of this.todoItems) {
       // If we've already stored a completed item, keep updating it.
+      // This lets us animated it away while rendering it as completed.
       // If we've never seen it before, don't store it at all.
       if (
         shouldShowTodoCard(item, this.showUrgentTodosOnly) ||
@@ -106,6 +109,12 @@ class PopupCardListElement extends LitElement {
       )
         this.todoMap.set(item.uid, item);
     }
+    // Record any items that were entirely deleted, so we can animate them away.
+    this.deletedTodos = new Set(
+      this.todoMap
+        .keys()
+        .filter((uid) => !this.todoItems.some((i) => i.uid === uid)),
+    );
   }
 
   static styles = css`
@@ -194,7 +203,9 @@ class PopupCardListElement extends LitElement {
         this.todoMap.values(),
         ({ uid }) => uid,
         (item) => {
-          const isHidden = !shouldShowTodoCard(item, this.showUrgentTodosOnly);
+          const isHidden =
+            !shouldShowTodoCard(item, this.showUrgentTodosOnly) ||
+            this.deletedTodos.has(item.uid);
           return html`<div
             class="CardWrapper ${classMap({ isHidden })}"
             @transitionend=${this.onCardTransitionEnd}
