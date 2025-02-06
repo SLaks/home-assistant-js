@@ -1,11 +1,16 @@
 import "./target-days";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, PropertyValues } from "lit";
 import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";
-import { updateItem } from "../../todos/ha-api";
+import { deleteItems, updateItem } from "../../todos/ha-api";
 import { applyTodoActions } from "./todo-actions";
+
+interface MenuItem {
+  item: unknown;
+  handler(): void;
+}
 
 class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
@@ -18,9 +23,39 @@ class PopupTodoSnoozerElement extends LitElement {
   @state()
   snoozeMenu: DateOption[] = [];
 
+  @state()
+  actionMenu: MenuItem[] = [];
+
   onTargetDaysUpdated(e: CustomEvent<TodoTargetDetails>) {
     this.snoozeButtons = e.detail.quickOptions;
     this.snoozeMenu = e.detail.fullWeek;
+  }
+  protected override willUpdate(_changedProperties: PropertyValues): void {
+    super.willUpdate(_changedProperties);
+    this.actionMenu = [
+      ...this.snoozeMenu.map((d) => ({
+        item: html`<ha-list-item graphic="icon"> ${d.label} </ha-list-item>`,
+        handler: () => this.snoozeTo(d.date),
+      })),
+      {
+        item: html`<li divider role="separator"></li>
+          <ha-list-item graphic="icon">
+            <ha-icon
+              icon="mdi:alert-${this.isUrgent ? "minus" : "plus"}"
+              slot="graphic"
+            ></ha-icon>
+            ${this.isUrgent ? "Not urgent" : "Mark as urgent"}
+          </ha-list-item>`,
+        handler: () => this.toggleUrgent(),
+      },
+      {
+        item: html`<ha-list-item graphic="icon" class="Warning">
+          <ha-icon class="Warning" icon="mdi:delete" slot="graphic"></ha-icon>
+          Delete
+        </ha-list-item>`,
+        handler: () => this.delete(),
+      },
+    ];
   }
 
   static styles = css`
@@ -50,12 +85,15 @@ class PopupTodoSnoozerElement extends LitElement {
       display: flex;
       justify-content: center;
     }
+
+    .Warning {
+      color: var(--error-color);
+    }
   `;
   protected override render(): unknown {
     const menuButton = html`<ha-button-menu
       @action=${(e: CustomEvent) => {
-        if (e.detail.index >= this.snoozeMenu.length) this.toggleUrgent();
-        else this.snoozeTo(this.snoozeMenu[e.detail.index].date);
+        this.actionMenu[e.detail.index].handler();
       }}
       corner="BOTTOM_END"
       menu-corner="END"
@@ -65,13 +103,7 @@ class PopupTodoSnoozerElement extends LitElement {
         <ha-icon class="MenuButtonIcon" icon="mdi:dots-vertical"></ha-icon>
       </ha-icon-button>
 
-      ${this.snoozeMenu.map(
-        (b) => html`<ha-list-item>${b.label}</ha-list-item>`,
-      )}
-      <li divider role="separator"></li>
-      <ha-list-item
-        >${this.isUrgent ? "Not urgent" : "Mark as urgent"}</ha-list-item
-      >
+      ${this.actionMenu.map(({ item }) => item)}
     </ha-button-menu>`;
 
     return html`
@@ -102,6 +134,10 @@ class PopupTodoSnoozerElement extends LitElement {
     return html`<mwc-button @click=${() => this.snoozeTo(entry.date)} raised>
       ${entry.label}
     </mwc-button>`;
+  }
+
+  private delete() {
+    deleteItems(this.hass!, this.item!.entityId, [this.item!.uid]);
   }
 
   private toggleUrgent() {
