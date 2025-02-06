@@ -11,6 +11,7 @@ import { TodoItemStatus } from "../todos/ha-api";
 import { keyed } from "lit/directives/keyed.js";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { computeDueTimestamp } from "../popup-cards/todo-cards/due-times";
+import { classMap } from "lit/directives/class-map.js";
 
 type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -78,6 +79,12 @@ class ToboBuilderElement extends LitElement {
    */
   @property({ type: Number, attribute: "force-rerender" })
   forceRerender = 0;
+
+  @state()
+  showDeleteTarget = false;
+  /** Used to replace the delete target after every drop to clear dragged items. */
+  @state()
+  deleteTargetVersion = 0;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -193,10 +200,12 @@ class ToboBuilderElement extends LitElement {
       grid-template-areas: "Templates LongTerm" "Days Days";
       grid-template-columns: 1fr min-content;
       grid-template-rows: min-content 3fr;
-      padding: 8px;
+      padding: var(--outer-spacing);
       gap: var(--panel-gap);
+      position: relative;
 
       --panel-gap: 12px;
+      --outer-spacing: 8px;
 
       /* Restore card styling overridden for panel views. */
       --ha-card-border-radius: var(--restore-card-border-radius, 12px);
@@ -235,6 +244,50 @@ class ToboBuilderElement extends LitElement {
       border-style: solid;
       border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
       color: var(--primary-text-color);
+    }
+
+    .DeleteTarget {
+      grid-area: Templates;
+      position: relative;
+      place-self: center;
+      z-index: 100;
+
+      width: 256px;
+      aspect-ratio: 1.618;
+      padding: 20px;
+
+      background-color: var(--error-color);
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(255, 255, 255, 0.09),
+        0 6px 6px rgba(255, 255, 255, 0.11);
+
+      display: flex;
+      place-content: stretch;
+
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.Show {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .DropTarget {
+        flex-grow: 1;
+        display: flex;
+        place-content: center;
+        place-items: center;
+        flex-direction: column; /* Makes thumbnails center vertically. */
+      }
+
+      ha-icon {
+        color: white;
+        --mdc-icon-size: 48px;
+        &:not(:only-child) {
+          display: none;
+        }
+      }
     }
 
     .Templates {
@@ -344,8 +397,8 @@ class ToboBuilderElement extends LitElement {
           emptyMessage: "No templates defined",
         }),
       })}
-      ${this.renderLongTerm()}
-      <div class="Days">
+      ${this.renderDeleteTarget()} ${this.renderLongTerm()}
+      <div class="Days" @drag-start=${this.onDragStart}>
         ${[...this.daySections].map(
           (sections) => html`<div class="Column Panel">
             ${sections.map((section) => this.renderSection(section))}
@@ -355,10 +408,44 @@ class ToboBuilderElement extends LitElement {
     `;
   }
 
+  private onDragStart() {
+    this.showDeleteTarget = true;
+  }
+  private onDragEnd() {
+    this.showDeleteTarget = false;
+  }
+
+  private renderDeleteTarget() {
+    return keyed(
+      this.deleteTargetVersion,
+      html`<ha-sortable
+        class=${classMap({
+          Panel: true,
+          DeleteTarget: true,
+          Show: this.showDeleteTarget,
+        })}
+        group="builder-todos"
+        ?rollback=${false}
+        @item-added=${(e: CustomEvent<{ data: TodoItemWithEntity }>) =>
+          this.deleteItem(e.detail.data)}
+      >
+        <div class="DropTarget">
+          <ha-icon icon="mdi:delete"></ha-icon>
+        </div>
+      </ha-sortable>`,
+    );
+  }
+
+  private deleteItem(item: TodoItemWithEntity) {
+    this.dispatchEvent(new CustomEvent("delete-todo", { detail: item }));
+    setTimeout(() => this.deleteTargetVersion++, 400);
+  }
+
   private renderLongTerm() {
     return html`
       <div
         class="LongTerm StretchingFlexColumn Panel"
+        @drag-start=${this.onDragStart}
         @item-added=${(
           e: CustomEvent<{ data: TodoItemWithEntity; index: number }>,
         ) =>
@@ -460,6 +547,7 @@ class ToboBuilderElement extends LitElement {
       `${this.forceRerender}-${key}`,
       html`<ha-sortable
         class=${ifDefined(className)}
+        @drag-end=${this.onDragEnd}
         @item-moved=${(
           e: CustomEvent<{ newIndex: number; oldIndex: number }>,
         ) => this.onItemMoved(items, e.detail.oldIndex, e.detail.newIndex)}

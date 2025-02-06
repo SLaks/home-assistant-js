@@ -68,6 +68,14 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
     this.templateListId = config.template_list;
   }
 
+  private async deleteTodo(e: CustomEvent<TodoItemWithEntity>) {
+    try {
+      await deleteItems(this.hass!, e.detail.entityId, [e.detail.uid]);
+    } catch (e) {
+      this.reportError(e);
+      throw e;
+    }
+  }
   private async updateTodo(e: CustomEvent<UpdateItemDetail>) {
     this.isSaving = true;
     try {
@@ -125,17 +133,21 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
       await Promise.all(promises);
     } catch (e) {
       this.forceRerender++;
-      this.dispatchEvent(
-        new CustomEvent("hass-notification", {
-          composed: true,
-          detail: { message: (e as Error)?.message || "Error!" },
-        }),
-      );
-      console.error(e);
+      this.reportError(e);
       throw e;
     } finally {
       this.isSaving = false;
     }
+  }
+
+  private reportError(e: unknown) {
+    this.dispatchEvent(
+      new CustomEvent("hass-notification", {
+        composed: true,
+        detail: { message: (e as Error)?.message || "Error!" },
+      }),
+    );
+    console.error(e);
   }
 
   /** Sets the `uid` field of an just-inserted item, finding the inserted item in the list. */
@@ -177,6 +189,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         .targetDays=${this.targetDays || []}
         .hass=${this.hass}
         @update-todo=${this.updateTodo}
+        @delete-todo=${this.deleteTodo}
       ></todo-builder>
       ${[this.targetListId, this.templateListId, this.longTermListId].map(
         (id) =>
