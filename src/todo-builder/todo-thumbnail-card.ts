@@ -30,10 +30,24 @@ class TodoThumbnailCard extends LitElement {
 
   static styles = css`
     :host {
+      --border-color: white;
+      position: relative;
       display: flex;
       flex-direction: column;
       align-self: stretch;
+      min-height: 96px;
     }
+
+    .isCompleted {
+      --border-color: #388e3c;
+    }
+    .isUrgent {
+      --border-color: #c62828;
+    }
+    .isSnoozed {
+      --border-color: #fbc02d;
+    }
+
     .Root {
       flex-grow: 1;
       display: flex;
@@ -41,32 +55,38 @@ class TodoThumbnailCard extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      aspect-ratio: 1.618;
-      place-self: stretch;
-      position: relative;
 
       background: var(--primary-background-color);
       color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
       border-radius: 16px;
       padding: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-
+      overflow: hidden;
       transition: border-color 0.2s ease-out;
-      --border-color: white;
+
       border: 2px solid var(--border-color);
-      &.isCompleted {
-        --border-color: #388e3c;
-      }
-      &.isUrgent {
-        --border-color: #c62828;
-      }
-      &.isSnoozed {
-        --border-color: #fbc02d;
+      &:has(.HasImage) {
+        padding: 0;
       }
     }
+
     popup-todo-icon {
       flex-grow: 1;
+      /*
+       * Shrink to fit label in emoji mode. 
+       * This is necessary for the template list, which is a flex row.
+       */
+      min-height: 0;
+      &.HasImage {
+        width: 100%;
+        height: 100%;
+        /* When there is an image, the image displays the name instead. */
+        ~ .Name {
+          display: none;
+        }
+      }
     }
+
     .Name {
       flex-shrink: 0;
       text-overflow: ellipsis;
@@ -74,7 +94,9 @@ class TodoThumbnailCard extends LitElement {
       text-align: center;
     }
 
+    /* This is outside .Root so it isn't clipped by overflow: hidden. */
     ha-icon {
+      transition: color 0.2s ease-out;
       color: var(--border-color);
       position: absolute;
       top: -12px;
@@ -89,27 +111,30 @@ class TodoThumbnailCard extends LitElement {
     const isCompleted = this.item.status === "completed";
     const isUrgent = isItemUrgent(this.item);
     const isSnoozed = isSnoozedLaterToday(this.item);
+
     let icon = "";
     if (isCompleted) icon = "mdi:check-circle";
     if (isSnoozed) icon = "mdi:clock";
     if (isUrgent) icon = "mdi:alert-circle";
     if (isUrgent && isSnoozed) icon = "mdi:clock-alert-outline";
+
+    // Applied to the icon separately because it's outside the root.
+    const statusClasses = classMap({
+      isCompleted,
+      isUrgent,
+      isSnoozed,
+    });
     return html`
-      <div
-        class=${classMap({
-          Root: true,
-          isCompleted,
-          isUrgent,
-          isSnoozed,
-        })}
-      >
+      <div class="Root ${statusClasses}">
         <popup-todo-icon
           .hass=${this.hass}
           .item=${this.item}
         ></popup-todo-icon>
         <div class="Name">${this.item?.summary}</div>
-        ${icon ? html`<ha-icon icon=${icon}></ha-icon>` : nothing}
       </div>
+      ${icon
+        ? html`<ha-icon class=${statusClasses} icon=${icon}></ha-icon>`
+        : nothing}
     `;
   }
 }

@@ -14,7 +14,8 @@ class PopupCardBase extends LitElement {
       height: 300px;
       max-width: 400px;
 
-      background-color: var(
+      --panel-radius: 16px;
+      background: var(
         --popup-card-background-color,
         var(--paper-item-icon-color)
       );
@@ -32,7 +33,12 @@ class PopupCardBase extends LitElement {
       text-align: center;
       text-overflow: ellipsis;
 
+      > * {
+        z-index: 0;
+      }
+
       .Name {
+        display: var(--popup-card-name-display, block);
         font-size: var(--popup-card-name-font-size, 1.3rem);
       }
 
@@ -53,7 +59,7 @@ class PopupCardBase extends LitElement {
         flex-shrink: 0;
         background: var(--primary-background-color);
         color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
-        border-radius: 16px;
+        border-radius: var(--panel-radius);
         padding: 12px;
         --mdc-theme-primary: var(--mdc-theme-surface);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);

@@ -293,7 +293,7 @@ class ToboBuilderElement extends LitElement {
     .Templates {
       grid-area: Templates;
       todo-thumbnail-card {
-        max-width: 150px;
+        width: 150px;
       }
     }
     .LongTerm {
@@ -348,6 +348,10 @@ class ToboBuilderElement extends LitElement {
             padding-left: 0px;
           }
         }
+      }
+      .TodoList {
+        flex-direction: column;
+        align-content: stretch;
       }
     }
 

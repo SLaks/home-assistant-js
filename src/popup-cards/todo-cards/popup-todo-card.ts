@@ -36,9 +36,19 @@ class PopupTodoCard extends LitElement {
     );
   }
   static styles = css`
+    popup-card-base:has(.HasImage) {
+      /* When there is an image, the image displays the name instead. */
+      --popup-card-name-display: none;
+    }
+
     .Urgent {
       --ha-card-border-color: #c62828;
       --ha-card-border-width: 4px;
+    }
+
+    popup-todo-icon.HasImage {
+      border-radius: var(--panel-radius);
+      overflow: hidden;
     }
   `;
 
@@ -50,11 +60,8 @@ class PopupTodoCard extends LitElement {
         ?is-completed=${this.item.status === TodoItemStatus.Completed}
         @click=${this.markCompleted}
       >
-        <popup-todo-icon
-          slot="icon"
-          .hass=${this.hass}
-          .item=${this.item}
-        ></popup-todo-icon>
+        <popup-todo-icon slot="icon" .hass=${this.hass} .item=${this.item}>
+        </popup-todo-icon>
         <div slot="name">${this.item.summary}</div>
         <popup-todo-snoozer
           slot="actions"

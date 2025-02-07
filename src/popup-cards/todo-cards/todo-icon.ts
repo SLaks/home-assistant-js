@@ -25,13 +25,31 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
 
   static styles = css`
     :host {
+      position: relative;
       display: flex;
     }
 
     img {
       display: flex;
       place-content: center;
-      width: 80%;
+      object-fit: cover;
+      width: 100%;
+      /* 
+       * Prevents the image itself from being draggable. 
+       * You can still drag from the image, because the
+       * click is seen by the parent.  
+       * Calling e.preventDefault() breaks SortableJS.
+       */
+      pointer-events: none;
+    }
+
+    .Name {
+      color: white;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 4px;
+      position: absolute;
+      inset: auto 0 0;
     }
   `;
 
@@ -51,10 +69,12 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
   }
   protected override render(): unknown {
     if (this.imageUrl) {
-      return html`<img
-        src=${this.imageUrl.replace("/config/www", "/local")}
-      />`;
+      return html`
+        <img src=${this.imageUrl.replace("/config/www", "/local")} />
+        <div class="Name">${this.item?.summary}</div>
+      `;
     }
+    // When there is an emoji, the name is displayed by the caller separately.
     return html`<popup-emoji-icon
       emoji=${this.details.emoji ?? defaultEmoji}
     ></popup-emoji-icon>`;
