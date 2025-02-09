@@ -38,14 +38,14 @@ class TodoThumbnailCard extends LitElement {
       min-height: 96px;
     }
 
-    .isCompleted {
-      --border-color: #388e3c;
-    }
     .isUrgent {
       --border-color: #c62828;
     }
     .isSnoozed {
       --border-color: #fbc02d;
+    }
+    .isCompleted {
+      --border-color: #388e3c;
     }
 
     .Root {
@@ -113,10 +113,10 @@ class TodoThumbnailCard extends LitElement {
     const isSnoozed = isSnoozedLaterToday(this.item);
 
     let icon = "";
-    if (isCompleted) icon = "mdi:check-circle";
     if (isSnoozed) icon = "mdi:clock";
     if (isUrgent) icon = "mdi:alert-circle";
     if (isUrgent && isSnoozed) icon = "mdi:clock-alert-outline";
+    if (isCompleted) icon = "mdi:check-circle";
 
     // Applied to the icon separately because it's outside the root.
     const statusClasses = classMap({
