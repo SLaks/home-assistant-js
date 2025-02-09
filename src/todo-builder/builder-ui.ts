@@ -249,6 +249,12 @@ class ToboBuilderElement extends LitElement {
       flex-direction: column;
     }
 
+    ha-check-list-item .Description {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .Panel {
       background: var(--ha-card-background, var(--card-background-color, #fff));
       backdrop-filter: var(--ha-card-backdrop-filter, none);
@@ -301,6 +307,11 @@ class ToboBuilderElement extends LitElement {
         &:not(:only-child) {
           display: none;
         }
+      }
+
+      todo-thumbnail-card {
+        width: 90%;
+        height: 90%;
       }
     }
 
@@ -356,7 +367,6 @@ class ToboBuilderElement extends LitElement {
         border-bottom: 1px solid var(--primary-background-color, #e0e0e0);
       }
       .Column {
-        display: flex;
         /* Make all columns equal width */
         flex-grow: 1;
         flex-basis: 100px;
@@ -365,14 +375,16 @@ class ToboBuilderElement extends LitElement {
           flex-basis: 200px;
           flex-grow: 2;
         }
+
+        /* Make the two inner columns equal width. */
+        display: grid;
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
         .Day {
-          padding: 8px;
-          flex-basis: 1px; /* Make adjacent columns equal width */
+          /* Truncate dropped wider long-term todos. */
+          min-width: 0;
           + .Day {
             border-left: 1px solid var(--primary-background-color, #e0e0e0);
-            /* Decrease padding between adjacent columns. */
-            margin-left: -8px;
-            padding-left: 0px;
           }
         }
 
@@ -403,6 +415,8 @@ class ToboBuilderElement extends LitElement {
 
       /* When dropping: */
       ha-check-list-item {
+        /* Include MDC's padding in the width. */
+        box-sizing: border-box;
         width: 100%;
       }
     }
