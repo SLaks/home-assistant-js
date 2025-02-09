@@ -6,7 +6,6 @@ import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { shouldShowTodoCard } from "./todo-cards/due-times.ts";
 import { ifDefined } from "lit/directives/if-defined.js";
-import { CARD_HEIGHT } from "./card-list.ts";
 import { waitUntilNoHaDialogs } from "../helpers/dialogs.ts";
 import { TodoItemWithEntity } from "../todos/subscriber.ts";
 
@@ -104,7 +103,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     }
     /* Don't let the height change after the cards are removed. */
     .content {
-      min-height: ${CARD_HEIGHT}px;
+      min-height: var(--popup-card-height, 300px);
     }
   `;
 

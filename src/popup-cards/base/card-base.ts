@@ -11,8 +11,8 @@ class PopupCardBase extends LitElement {
 
   static styles = css`
     .Card {
-      height: 300px;
-      max-width: 400px;
+      height: var(--popup-card-height, 300px);
+      max-width: var(--popup-card-width, 400px);
 
       --panel-radius: 16px;
       background: var(

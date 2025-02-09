@@ -20,8 +20,6 @@ const BASE_CARD_WIDTH = 400;
 const CARD_SPACING = 16;
 /** The minimum width of a card. */
 const MIN_CARD_WIDTH = 200;
-/** The height of all cards. */
-export const CARD_HEIGHT = 300;
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardListElement extends LitElement {
@@ -88,11 +86,13 @@ class PopupCardListElement extends LitElement {
     );
     const cardsPerRow = Math.ceil(this.cardCount / rowCount);
     this.style.setProperty(
-      "--popup-card-width",
+      "--popup-card-actual-width",
       `${Math.min(
         // Subtract the spacing, which is not part of the width.
         availableWidth / cardsPerRow - CARD_SPACING,
-        BASE_CARD_WIDTH,
+        parseInt(
+          getComputedStyle(this).getPropertyValue("--popup-card-width"),
+        ) ?? BASE_CARD_WIDTH,
       )}px`,
     );
     this.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
@@ -144,8 +144,8 @@ class PopupCardListElement extends LitElement {
        * Use max-width to prevent them from growing wider than the contained card.
        */
       flex-grow: 1;
-      width: var(--popup-card-width);
-      max-width: ${BASE_CARD_WIDTH}px;
+      width: var(--popup-card-actual-width);
+      max-width: var(--popup-card-width, ${BASE_CARD_WIDTH}px);
       min-width: 0;
       overflow: hidden;
       animation: show-card var(--transition-duration) var(--transition-func)
