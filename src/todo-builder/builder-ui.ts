@@ -199,13 +199,27 @@ class ToboBuilderElement extends LitElement {
       display: grid;
       grid-template-areas: "Templates LongTerm" "Days Days";
       grid-template-columns: 1fr min-content;
-      grid-template-rows: min-content 3fr;
+      grid-template-rows:
+        minmax(
+          auto,
+          calc(
+            2 * var(--todo-thumbnail-card-height) + 3 *
+              var(--todo-thumbnail-card-gap)
+          )
+        )
+        1fr;
       padding: var(--outer-spacing);
       gap: var(--panel-gap);
       position: relative;
 
       --panel-gap: 12px;
       --outer-spacing: 8px;
+      --todo-thumbnail-card-height: 96px;
+      --todo-thumbnail-card-gap: 12px;
+
+      --mdc-list-side-padding: 4px;
+      /* This matches a calc() in .mdc-checkbox. */
+      --padding-around-mwc-checkbox: 11px;
 
       /* Restore card styling overridden for panel views. */
       --ha-card-border-radius: var(--restore-card-border-radius, 12px);
@@ -292,16 +306,23 @@ class ToboBuilderElement extends LitElement {
 
     .Templates {
       grid-area: Templates;
+      overflow: auto;
+
       todo-thumbnail-card {
         width: 150px;
       }
     }
     .LongTerm {
       grid-area: LongTerm;
+      min-width: 200px;
+      overflow-y: auto;
 
-      ha-sortable {
-        overflow-y: auto;
-        max-height: 35vh;
+      add-todo-field {
+        /* Align to the checkbox, including its padding. */
+        margin: calc(
+          var(--mdc-list-side-padding) + var(--padding-around-mwc-checkbox)
+        );
+        margin-bottom: 0;
       }
 
       .CompletedLabel {
@@ -309,10 +330,17 @@ class ToboBuilderElement extends LitElement {
         color: #388e3c;
       }
 
+      ha-check-list-item {
+        padding-right: 8px;
+      }
+
       /* When dropping: */
       todo-thumbnail-card {
-        width: 150px;
-        margin: 12px;
+        /* Align to the checkbox, including its padding. */
+        margin: 0
+          calc(
+            var(--mdc-list-side-padding) + var(--padding-around-mwc-checkbox)
+          );
       }
     }
     .Days {
@@ -323,10 +351,9 @@ class ToboBuilderElement extends LitElement {
       gap: var(--panel-gap);
       h3 {
         text-align: center;
-        margin: 8px -8px;
-        padding-bottom: 10px;
+        margin: 8px -8px 0;
+        padding-bottom: var(--todo-thumbnail-card-gap);
         border-bottom: 1px solid var(--primary-background-color, #e0e0e0);
-        margin-bottom: 6px;
       }
       .Column {
         display: flex;
@@ -348,6 +375,11 @@ class ToboBuilderElement extends LitElement {
             padding-left: 0px;
           }
         }
+
+        add-todo-field {
+          margin: var(--todo-thumbnail-card-gap) var(--todo-thumbnail-card-gap)
+            0;
+        }
       }
       .TodoList {
         flex-direction: column;
@@ -357,8 +389,8 @@ class ToboBuilderElement extends LitElement {
 
     .TodoList {
       flex-grow: 1;
-      padding: 12px;
-      gap: 12px;
+      padding: var(--todo-thumbnail-card-gap);
+      gap: var(--todo-thumbnail-card-gap);
       display: flex;
       flex-wrap: wrap;
       align-items: stretch;

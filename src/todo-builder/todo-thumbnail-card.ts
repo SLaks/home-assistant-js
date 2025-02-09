@@ -34,8 +34,7 @@ class TodoThumbnailCard extends LitElement {
       position: relative;
       display: flex;
       flex-direction: column;
-      align-self: stretch;
-      min-height: 96px;
+      height: var(--todo-thumbnail-card-height);
     }
 
     .isUrgent {

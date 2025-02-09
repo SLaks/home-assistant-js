@@ -15,8 +15,6 @@ class AddTodoFieldElement extends LitElement {
       display: flex;
       flex-direction: row;
       align-items: center;
-      padding: 24px;
-      padding-bottom: 0;
       position: relative;
     }
     ha-textfield {
@@ -25,8 +23,8 @@ class AddTodoFieldElement extends LitElement {
     ha-icon-button {
       position: absolute;
       inset-inline-start: initial;
-      inset-inline-end: 27px;
-      right: 27px;
+      inset-inline-end: 3px;
+      right: 3px;
     }
 
     .buttonIcon {
