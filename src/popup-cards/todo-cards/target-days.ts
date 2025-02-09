@@ -98,17 +98,6 @@ class TodoTargetDaysElement extends SimpleEntityBasedElement {
       date: today.add(1, "day").hour(8).toDate(),
     });
 
-    const nextWeek = this.motzeiDate?.add(1, "day").hour(8);
-    if (
-      nextWeek &&
-      !options.some((o) => o.type !== "menu" && nextWeek.isSame(o.date, "day"))
-    ) {
-      options.push({
-        label: `Next ${nextWeek.format("dddd")}`,
-        date: nextWeek.toDate(),
-      });
-    }
-
     const now = dayjs();
     return options.filter((o) => o.type === "menu" || now.isBefore(o.date));
   }

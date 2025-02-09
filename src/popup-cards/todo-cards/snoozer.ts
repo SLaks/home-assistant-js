@@ -59,18 +59,24 @@ class PopupTodoSnoozerElement extends LitElement {
   }
 
   static styles = css`
+    :host {
+      display: flex;
+    }
+
     .Label {
+      writing-mode: sideways-lr;
       text-align: center;
+      align-self: center;
+      margin-right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-family: var(--mdc-typography-font-family, Roboto, sans-serif);
       font-size: var(--mdc-typography-button-font-size, 0.875rem);
-      margin-left: 18px;
-      margin-top: -8px;
     }
 
     .Buttons {
+      flex-grow: 1;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -78,6 +84,9 @@ class PopupTodoSnoozerElement extends LitElement {
       gap: 8px;
       > * {
         flex-grow: 1;
+      }
+      .IconMenu {
+        flex-grow: 0;
       }
     }
 
@@ -92,6 +101,7 @@ class PopupTodoSnoozerElement extends LitElement {
   `;
   protected override render(): unknown {
     const menuButton = html`<ha-button-menu
+      class="IconMenu"
       @action=${(e: CustomEvent) => {
         this.actionMenu[e.detail.index].handler();
       }}
@@ -111,9 +121,10 @@ class PopupTodoSnoozerElement extends LitElement {
         .hass=${this.hass}
         @target-days-updated=${this.onTargetDaysUpdated}
       ></todo-target-days>
-      <div class="Label">Snooze until ${menuButton}</div>
+      <div class="Label">Snooze</div>
       <div class="Buttons">
         ${this.snoozeButtons.map((b) => this.renderSnoozeButton(b))}
+        ${menuButton}
       </div>
     `;
   }
