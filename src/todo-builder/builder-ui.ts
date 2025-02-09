@@ -69,6 +69,8 @@ class ToboBuilderElement extends LitElement {
   targetListId: string = "";
   @property({ attribute: "long-term-list-id" })
   longTermListId: string = "";
+  @property({ attribute: "template-list-id" })
+  templateListId: string = "";
 
   @property({ attribute: false, type: Array })
   targetList: readonly TodoItemWithEntity[] = [];
@@ -108,6 +110,9 @@ class ToboBuilderElement extends LitElement {
   /** Used to replace the delete target after every drop to clear dragged items. */
   @state()
   deleteTargetVersion = 0;
+  /** Used to replace the template list after reordering. */
+  @state()
+  templateVersion = "";
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -131,6 +136,14 @@ class ToboBuilderElement extends LitElement {
       }
     }
 
+    if (
+      changedProperties.has("targetList") ||
+      changedProperties.has("fullLongTermList")
+    ) {
+      // After dragging an item from the template list, recreate it to
+      // fix SortableJS clones.
+      this.templateVersion = `${this.targetList.length}-${this.fullLongTermList.length}`;
+    }
     if (
       changedProperties.has("targetList") ||
       changedProperties.has("targetDays")
@@ -478,9 +491,7 @@ class ToboBuilderElement extends LitElement {
         items: this.groupedTemplates,
         // Recreate when any item is dragged from the template list,
         // to fix bad SortableJS clones.
-        key: `${
-          this.targetList.length + this.longTermList.length
-        }-${this.templateList.map((i) => i.uid).join()}`,
+        key: this.templateVersion,
         className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
         content: this.renderThumbnailList({
@@ -739,16 +750,19 @@ class ToboBuilderElement extends LitElement {
       if (prevItem?.type === "header") return;
     }
 
-    this.dispatchEvent(
-      new CustomEvent<UpdateItemDetail>("update-todo", {
-        detail: {
-          item,
-          targetEntity: item.entityId,
-          status: item.status,
-          previousUid: prevItem?.uid,
-        },
-      }),
-    );
+    const detail: UpdateItemDetail = {
+      item,
+      targetEntity: item.entityId,
+      status: item.status,
+      previousUid: prevItem?.uid,
+    };
+    this.dispatchEvent(new CustomEvent("update-todo", { detail }));
+
+    // Rerender every time we move templates, because the final ordering
+    // after grouping is unpredictable. Moving a template to a different
+    // group may not affect any order, or may move entire groups.
+    if (item.entityId === this.templateListId)
+      detail.completionPromise?.then(() => (this.templateVersion += "!"));
   }
 
   private renderThumbnailList({

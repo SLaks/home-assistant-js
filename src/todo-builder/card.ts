@@ -85,7 +85,10 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
       throw e;
     }
   }
-  private async updateTodo(e: CustomEvent<UpdateItemDetail>) {
+  private updateTodo(e: CustomEvent<UpdateItemDetail>) {
+    e.detail.completionPromise = this.handleUpdate(e);
+  }
+  private async handleUpdate(e: CustomEvent<UpdateItemDetail>) {
     this.isSaving = true;
     try {
       const promises: Promise<unknown>[] = [];
@@ -193,6 +196,7 @@ class TodoBuilderCardElement extends SimpleEntityBasedElement {
         force-rerender=${this.forceRerender}
         long-term-list-id=${ifDefined(this.listToEntityIds.get("longTermList"))}
         target-list-id=${ifDefined(this.listToEntityIds.get("targetList"))}
+        template-list-id=${ifDefined(this.listToEntityIds.get("templateList"))}
         .targetList=${this.targetList}
         .templateList=${this.templateList}
         .fullLongTermList=${this.longTermList}
