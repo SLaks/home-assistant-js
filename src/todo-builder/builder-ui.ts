@@ -13,6 +13,13 @@ import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { computeDueTimestamp } from "../popup-cards/todo-cards/due-times";
 import { classMap } from "lit/directives/class-map.js";
 
+export function getCategory(item: TodoItemWithEntity) {
+  try {
+    return JSON.parse(item.description ?? "{}").category;
+  } catch {
+    return "Other";
+  }
+}
 type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
 export interface UpdateItemDetail {
@@ -45,6 +52,14 @@ interface DaySection extends DateOption {
 /** A panel in the lower pane, with one or (for today) more lists. */
 type DayColumn = DaySection[];
 
+interface CategoryHeader {
+  type: "header";
+  header: string;
+}
+type GroupedListElement =
+  | (TodoItemWithEntity & { type?: undefined })
+  | CategoryHeader;
+
 class ToboBuilderElement extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: "target-list-id" })
@@ -60,6 +75,9 @@ class ToboBuilderElement extends LitElement {
   longTermList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
   targetDays: readonly DateOption[] = [];
+
+  @state()
+  private groupedTemplates: GroupedListElement[] = [];
 
   @state()
   daySections: DayColumn[] = [];
@@ -93,9 +111,19 @@ class ToboBuilderElement extends LitElement {
   }
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("templateList")) {
-      this.templateList = this.templateList.filter(
-        (item) => item.status === TodoItemStatus.NeedsAction,
+      const categoryGroups = Map.groupBy(
+        this.templateList.filter(
+          (item) => item.status === TodoItemStatus.NeedsAction,
+        ),
+        getCategory,
       );
+      if (categoryGroups.size === 1) {
+        this.groupedTemplates = categoryGroups.values().next().value!;
+      } else {
+        this.groupedTemplates = [...categoryGroups].flatMap(
+          ([header, items]) => [{ type: "header", header }, ...items],
+        );
+      }
     }
 
     if (
@@ -413,6 +441,13 @@ class ToboBuilderElement extends LitElement {
         padding: 16px;
       }
 
+      h4 {
+        margin: 0;
+        writing-mode: sideways-lr;
+        text-align: center;
+        border-bottom: 1px solid var(--primary-background-color, #e0e0e0);
+      }
+
       /* When dropping: */
       ha-check-list-item {
         /* Include MDC's padding in the width. */
@@ -436,14 +471,16 @@ class ToboBuilderElement extends LitElement {
   override render() {
     return html`
       ${this.renderTodoList({
-        items: this.templateList,
+        items: this.groupedTemplates,
         // Recreate when any item is dragged from the template list,
         // to fix bad SortableJS clones.
-        key: this.targetList.length + this.longTermList.length,
+        key: `${
+          this.targetList.length + this.longTermList.length
+        }-${this.templateList.map((i) => i.uid).join()}`,
         className: "Templates Panel",
         group: { name: "builder-todos", pull: "clone", put: false },
         content: this.renderThumbnailList({
-          items: this.templateList,
+          items: this.groupedTemplates,
           emptyMessage: "No templates defined",
         }),
       })}
@@ -586,7 +623,7 @@ class ToboBuilderElement extends LitElement {
     key,
     options,
   }: {
-    items: readonly TodoItemWithEntity[];
+    items: readonly GroupedListElement[];
     className?: string;
     group?: string | object;
     content: unknown;
@@ -682,18 +719,20 @@ class ToboBuilderElement extends LitElement {
   }
 
   onItemMoved(
-    items: readonly TodoItemWithEntity[],
+    items: readonly GroupedListElement[],
     oldIndex: number,
     newIndex: number,
   ) {
     const item = items[oldIndex];
-    let prevItem: TodoItemWithEntity | undefined;
+    if (item.type === "header") return;
+    let prevItem: GroupedListElement | undefined;
     if (newIndex > 0) {
-      if (newIndex < oldIndex) {
-        prevItem = items[newIndex - 1];
-      } else {
-        prevItem = items[newIndex];
-      }
+      if (newIndex < oldIndex) newIndex--;
+      prevItem = items[newIndex];
+    }
+    if (prevItem?.type === "header") {
+      prevItem = items[newIndex - 1];
+      if (prevItem?.type === "header") return;
     }
 
     this.dispatchEvent(
@@ -712,17 +751,23 @@ class ToboBuilderElement extends LitElement {
     items,
     emptyMessage,
   }: {
-    items: readonly TodoItemWithEntity[];
+    items: readonly GroupedListElement[];
     emptyMessage: string;
   }) {
     return html`<div class="TodoList">
       ${repeat(
         items,
-        (item) => item.uid,
-        (item) => this.renderTodoThumbnail(item),
+        (item) => (item.type === "header" ? item.header : item.uid),
+        (item) =>
+          item.type === "header"
+            ? this.renderHeader(item.header)
+            : this.renderTodoThumbnail(item),
       )}
       <div class="EmptyMessage">${emptyMessage}</div>
     </div>`;
+  }
+  private renderHeader(header: string) {
+    return html`<h4>${header}</h4>`;
   }
   private renderTodoThumbnail(item: TodoItemWithEntity) {
     return html`<todo-thumbnail-card
