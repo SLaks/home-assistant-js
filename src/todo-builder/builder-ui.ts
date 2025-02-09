@@ -40,6 +40,9 @@ export interface UpdateItemDetail {
   readonly targetEntity: string;
   /** The `.uid` of the item that the new item should be placed after. */
   previousUid?: string;
+
+  /** Set by the event handler after the update(s) are complete. */
+  completionPromise?: Promise<unknown>;
 }
 
 /** A single list/drop target in the lower pane. */
@@ -72,10 +75,12 @@ class ToboBuilderElement extends LitElement {
   @property({ attribute: false, type: Array })
   templateList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
-  longTermList: readonly TodoItemWithEntity[] = [];
+  fullLongTermList: readonly TodoItemWithEntity[] = [];
   @property({ attribute: false, type: Array })
   targetDays: readonly DateOption[] = [];
 
+  @state()
+  longTermList: TodoItemWithEntity[] = [];
   @state()
   private groupedTemplates: GroupedListElement[] = [];
 
@@ -133,14 +138,13 @@ class ToboBuilderElement extends LitElement {
       if (!this.targetDays.length) return;
       this.daySections = this.groupDays();
     }
-    // Rerender on all changes to the long term list, including reordering.
-    // This fixes ghost ripple effects.
-    if (changedProperties.has("longTermList")) {
+
+    if (changedProperties.has("fullLongTermList")) {
       const today = dayjs().startOf("day").toDate();
       // Drop items that were completed yesterday.
       // Also drop items with no recorded completion date.
       // We don't care about the timestamp.
-      this.longTermList = this.longTermList.filter(
+      this.longTermList = this.fullLongTermList.filter(
         (item) =>
           item.status === TodoItemStatus.NeedsAction ||
           new Date(item.due!) > today,
