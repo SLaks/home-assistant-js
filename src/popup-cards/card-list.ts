@@ -92,7 +92,7 @@ class PopupCardListElement extends LitElement {
         availableWidth / cardsPerRow - CARD_SPACING,
         parseInt(
           getComputedStyle(this).getPropertyValue("--popup-card-width"),
-        ) ?? BASE_CARD_WIDTH,
+        ) || BASE_CARD_WIDTH,
       )}px`,
     );
     this.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
