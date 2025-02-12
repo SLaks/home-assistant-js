@@ -22,6 +22,9 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
   @bindEntity({ entityId: "sensor.todo_images", attributeName: "file_list" })
   @state()
   imageFiles: string[] = [];
+  @bindEntity({ entityId: "sensor.todo_images", attributeName: "bytes" })
+  @state()
+  imageFileVersion = "";
 
   static styles = css`
     :host {
@@ -58,6 +61,15 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
     this.imageUrl = this.imageFiles.find((file) =>
       file.includes(`/${toFileName(this.item?.summary ?? "")}.`),
     );
+
+    // Add a cachebuster that changes if any image is updated.
+    // It also changes when new images are generated, but that
+    // is not the end of the world.
+    if (this.imageUrl) {
+      this.imageUrl += `?size-version=${encodeURIComponent(
+        this.imageFileVersion,
+      )}`;
+    }
     this.classList.toggle("HasImage", !!this.imageUrl);
     if (changedProps.has("item")) {
       try {
