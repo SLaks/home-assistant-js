@@ -28,13 +28,15 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
 
   static styles = css`
     :host {
-      position: relative;
-      display: flex;
+      display: grid;
+      grid-template-columns: 100%;
+      grid-template-rows: 100%;
+      width: 100%;
     }
 
     img {
-      display: flex;
-      place-content: center;
+      grid-area: 1 / 1;
+      place-self: stretch;
       object-fit: cover;
       width: 100%;
       /* 
@@ -47,12 +49,12 @@ class PopupTodoIcon extends SimpleEntityBasedElement {
     }
 
     .Name {
+      grid-area: 1 / 1;
       color: white;
       text-align: center;
       background-color: rgba(0, 0, 0, 0.7);
       padding: 4px;
-      position: absolute;
-      inset: auto 0 0;
+      place-self: flex-end stretch;
     }
   `;
 

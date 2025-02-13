@@ -33,10 +33,6 @@ class PopupCardBase extends LitElement {
       text-align: center;
       text-overflow: ellipsis;
 
-      > * {
-        z-index: 0;
-      }
-
       .Name {
         display: var(--popup-card-name-display, block);
         font-size: var(--popup-card-name-font-size, 1.3rem);
