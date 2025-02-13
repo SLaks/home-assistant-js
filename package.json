@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "eslint --flag unstable_ts_config && tsc && vite build",
+    "build": "eslint && tsc && vite build",
     "preview": "vite preview",
     "release": "npm run build && conventional-changelog -r 2 | powershell gh release create $(node -p 'require(''./package.json'').version') --notes-file - ./dist/slaks-ui.js"
   },
@@ -15,15 +15,15 @@
     "lit": "^3.2.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
+    "@eslint/js": "^9.20.0",
     "conventional-changelog-cli": "^5.0.0",
-    "eslint": "^9.9.1",
-    "eslint-plugin-lit": "^1.14.0",
-    "globals": "^15.9.0",
-    "jiti": "^1.21.6",
+    "eslint": "^9.20.1",
+    "eslint-plugin-lit": "^1.15.0",
+    "globals": "^15.15.0",
+    "jiti": "^2.4.2",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.4.0",
-    "vite": "^5.4.1",
+    "typescript-eslint": "^8.24.0",
+    "vite": "^6.1.0",
     "vite-plugin-web-components-hmr": "^0.1.3"
   }
 }
