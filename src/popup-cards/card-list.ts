@@ -26,7 +26,10 @@ class PopupCardListElement extends LitElement {
   @property({ attribute: false })
   hass?: HomeAssistant;
 
-  @property({ attribute: "card-entities", type: Array })
+  @property({ attribute: false, type: Array })
+  moveToListIds: string[] = [];
+
+  @property({ attribute: false, type: Array })
   cardEntities: string[] = [];
   @property({ attribute: false, type: Array })
   todoItems: TodoItemWithEntity[] = [];
@@ -210,7 +213,11 @@ class PopupCardListElement extends LitElement {
             class="CardWrapper ${classMap({ isHidden })}"
             @transitionend=${this.onCardTransitionEnd}
           >
-            <popup-todo-card .hass=${this.hass} .item=${item}></popup-todo-card>
+            <popup-todo-card
+              .hass=${this.hass}
+              .item=${item}
+              .moveToListIds=${this.moveToListIds}
+            ></popup-todo-card>
           </div>`;
         },
       )}

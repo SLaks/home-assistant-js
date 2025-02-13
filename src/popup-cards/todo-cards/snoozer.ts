@@ -4,7 +4,7 @@ import { property, state } from "lit/decorators.js";
 import { css, html, LitElement, PropertyValues } from "lit";
 import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";
-import { deleteItems, updateItem } from "../../todos/ha-api";
+import { createItem, deleteItems, updateItem } from "../../todos/ha-api";
 import { applyTodoActions } from "./todo-actions";
 
 interface MenuItem {
@@ -17,6 +17,9 @@ class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) item?: TodoItemWithEntity;
   @property({ attribute: "is-urgent", type: Boolean })
   isUrgent = false;
+
+  @property({ attribute: false, type: Array })
+  moveToListIds: string[] = [];
 
   @state()
   snoozeButtons: Array<DateOption | DateMenu> = [];
@@ -37,6 +40,22 @@ class PopupTodoSnoozerElement extends LitElement {
         item: html`<ha-list-item graphic="icon"> ${d.label} </ha-list-item>`,
         handler: () => this.snoozeTo(d.date),
       })),
+      ...this.moveToListIds.map((listId, index) => {
+        const list = this.hass!.states[listId] || {};
+        return {
+          item: html` ${index === 0
+              ? html`<li divider role="separator"></li>`
+              : ""}
+            <ha-list-item graphic="icon">
+              <ha-icon
+                icon=${list.attributes?.icon || "mdi:clipboard-list"}
+                slot="graphic"
+              ></ha-icon>
+              Move to ${list.attributes?.friendly_name || listId}
+            </ha-list-item>`,
+          handler: () => this.moveTo(listId),
+        };
+      }),
       {
         item: html`<li divider role="separator"></li>
           <ha-list-item graphic="icon">
@@ -149,6 +168,11 @@ class PopupTodoSnoozerElement extends LitElement {
 
   private delete() {
     deleteItems(this.hass!, this.item!.entityId, [this.item!.uid]);
+  }
+
+  async moveTo(listId: string) {
+    await createItem(this.hass!, listId, this.item!);
+    await deleteItems(this.hass!, this.item!.entityId, [this.item!.uid]);
   }
 
   private toggleUrgent() {

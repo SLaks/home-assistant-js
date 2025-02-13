@@ -24,6 +24,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   todoEntityId?: string;
 
   @state()
+  moveToListIds: string[] = [];
+
+  @state()
   showUrgentTodosOnly = false;
 
   @state()
@@ -66,6 +69,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       card_list_entity_id: "sensor.popup_cards",
       reopen_delay_ms: `${5 * 60_000}`,
       todo_entity_id: "todo.your_list",
+      move_to_list_ids: "todo.long_term_tasks",
     };
   }
 
@@ -80,6 +84,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     this.todoEntityId = config.todo_entity_id;
     this.cardListEntityId = config.card_list_entity_id;
     this.showUrgentTodosOnly = !!config.show_urgent_todos_only;
+    this.moveToListIds = [config.move_to_list_ids ?? []].flat();
     this.browserIds = config.browser_ids
       ? new Set(
           config.browser_ids.map((b) =>
@@ -122,6 +127,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       .hass=${this.hass}
       .todoItems=${this.todoItems}
       .cardCount=${this.cardCount}
+      .moveToListIds=${this.moveToListIds}
       @card-transitioned=${this.onCardHidden}
     >
     </popup-card-list>`;
@@ -143,6 +149,14 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       <p>This invisible card shows a popup with:</p>
       <ul>
         ${this.renderEditModePopupInfo()} ${this.renderEditModeTodoInfo()}
+        ${this.moveToListIds.map(
+          (id) =>
+            html`<li>
+              An option to move todos to
+              ${this.hass?.states[id]?.attributes.friendly_name ??
+              id + " not found!"}
+            </li>`,
+        )}
       </ul>
     </ha-card>`;
   }
@@ -215,6 +229,7 @@ interface CardBehaviorOptions {
   todo_entity_id?: string;
   card_list_entity_id?: string;
   show_urgent_todos_only?: boolean;
+  move_to_list_ids?: string | string[];
 }
 interface CardBrowserSpec extends CardBehaviorOptions {
   browser_id: string;

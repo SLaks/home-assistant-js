@@ -13,6 +13,9 @@ import { classMap } from "lit/directives/class-map.js";
 class PopupTodoCard extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) item?: TodoItemWithEntity;
+
+  @property({ attribute: false, type: Array })
+  moveToListIds: string[] = [];
   @state() isUrgent = false;
 
   override connectedCallback(): void {
@@ -65,6 +68,7 @@ class PopupTodoCard extends LitElement {
         <div slot="name">${this.item.summary}</div>
         <popup-todo-snoozer
           slot="actions"
+          .moveToListIds=${this.moveToListIds}
           .isUrgent=${this.isUrgent}
           .hass=${this.hass}
           .item=${this.item}

@@ -249,6 +249,7 @@ styles:
 
 ### Other options
 
+- `move_to_list_ids`: One or more todo list entity IDs.  Todo popup cards will offer a menu option to move todos to each of these lists.
 - `reopen_delay_ms`: If the popup is dismissed (by clicking the background), automatically reopen it after waiting this long.
   - If this is omitted or set to `0`, the popup will not reopen until the dashboard is refreshed or a new popup card appears.
 - `browser_ids:` A list of [browser_mod] Browser IDs (get these strings from the Browser Mod control panel). If specified, the popup will only appear on these browsers.
