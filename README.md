@@ -22,17 +22,17 @@ You can create a todo list entity of tasks to appear as popup cards.
 
 To do this:
 
-1.  Create a todo list entity using any integration
+1. Create a todo list entity using any integration
     - Use Local Todo for simplicity, or use Google Tasks so you can add by voice using Google Home devices.
     - Or use your favorite todo platform.
-2.  In your wall-mounted dashboard, add the following custom card:
+2. In your wall-mounted dashboard, add the following custom card:
 
     ```yaml
     type: custom:popup-card-runner
     todo_entity_id: todo.your_tasks
     ```
 
-3.  Optional: To automatically add an emoji for each todo (will be rendered as an icon in the card), add the following automation:
+3. Optional: To automatically add an emoji for each todo (will be rendered as an icon in the card), add the following automation:
 
     <details>
         <summary>GenAI Emoji Automation</summary>
@@ -249,9 +249,14 @@ styles:
 
 ### Other options
 
+- `display_mode`:
+  - `popup` (default): Show a popup when there are any cards, as described above.
+  - `vertical-stack`: Show all active cards in a vertical stack directly in the dashboard.
+  - `horizontal-stack`: Same as vertical-stack, but show horizontally (wrapping to a new line if they don't fit).
 - `move_to_list_ids`: One or more todo list entity IDs.  Todo popup cards will offer a menu option to move todos to each of these lists.
 - `reopen_delay_ms`: If the popup is dismissed (by clicking the background), automatically reopen it after waiting this long.
   - If this is omitted or set to `0`, the popup will not reopen until the dashboard is refreshed or a new popup card appears.
+  - This has no effect if `display_mode` is not `popup`.
 - `browser_ids:` A list of [browser_mod] Browser IDs (get these strings from the Browser Mod control panel). If specified, the popup will only appear on these browsers.
 
   - Use this to make popups only appear on some screens.

@@ -13,6 +13,7 @@ import { shouldShowTodoCard } from "./todo-cards/due-times";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { TodoItemWithEntity } from "../todos/subscriber";
+import { DisplayMode } from "./runner";
 
 /** The default width of all cards (before flex-shrink). */
 const BASE_CARD_WIDTH = 400;
@@ -23,6 +24,9 @@ const MIN_CARD_WIDTH = 200;
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardListElement extends LitElement {
+  @property({ attribute: "display-mode" })
+  displayMode: DisplayMode = DisplayMode.Popup;
+
   @property({ attribute: false })
   hass?: HomeAssistant;
 
@@ -79,11 +83,16 @@ class PopupCardListElement extends LitElement {
    * to maximize the width of the row with the most cards after rounding.
    */
   private calculateCardWidth() {
+    if (this.displayMode === DisplayMode.VerticalStack) return;
+    const outerWidth =
+      this.displayMode === DisplayMode.Popup
+        ? parseInt(getComputedStyle(this).maxWidth)
+        : this.offsetWidth;
     // Note: This includes the negative margin that cancels the first card's spacing.
     // This lets us treat the card spacing as part of the card when dividing.
     // Subtract a bit to make room for a vertical scrollbar.  If there is no
     // scrollbar, flex-grow will expand to fit anyway.
-    const availableWidth = parseInt(getComputedStyle(this).maxWidth) - 20;
+    const availableWidth = outerWidth - 20;
     const rowCount = Math.ceil(
       (this.cardCount * (MIN_CARD_WIDTH + CARD_SPACING)) / availableWidth,
     );
@@ -127,11 +136,18 @@ class PopupCardListElement extends LitElement {
       display: flex;
       justify-content: center;
       overflow: auto;
-      max-width: 80vw;
-      max-height: 80vh;
 
       margin-left: -${CARD_SPACING}px;
       margin-top: -${CARD_SPACING}px;
+    }
+
+    :host([display-mode="popup"]) {
+      max-width: 80vw;
+      max-height: 80vh;
+    }
+
+    :host([display-mode="vertical-stack"]) {
+      flex-direction: column;
     }
 
     .CardWrapper,
@@ -147,21 +163,22 @@ class PopupCardListElement extends LitElement {
        * Use max-width to prevent them from growing wider than the contained card.
        */
       flex-grow: 1;
-      width: var(--popup-card-actual-width);
+      width: var(
+        --popup-card-actual-width,
+        var(--popup-card-width, ${BASE_CARD_WIDTH}px)
+      );
       max-width: var(--popup-card-width, ${BASE_CARD_WIDTH}px);
       min-width: 0;
+      min-height: 0;
+      height: var(--popup-card-height, 300px);
       overflow: hidden;
-      animation: show-card var(--transition-duration) var(--transition-func)
-        forwards;
-      animation-fill-mode: none;
+      animation: var(--transition-duration) var(--transition-func) none;
+
       transition-duration: var(--transition-duration);
       transition-timing-function: var(--transition-func);
-      transition-property: flex-basis, margin-left, width;
       &.isHidden {
-        margin-left: 0;
-        min-width: 0;
-        width: 0;
         flex-grow: 0;
+        animation-fill-mode: none;
       }
 
       > * {
@@ -169,10 +186,41 @@ class PopupCardListElement extends LitElement {
       }
     }
 
-    @keyframes show-card {
+    :host([display-mode="popup"]),
+    :host([display-mode="horizontal-stack"]) {
+      .CardWrapper {
+        animation-name: show-card-horizontal;
+        transition-property: flex-basis, margin-left, width;
+        &.isHidden {
+          margin-left: 0;
+          min-width: 0;
+          width: 0;
+        }
+      }
+    }
+    :host([display-mode="vertical-stack"]) {
+      .CardWrapper {
+        animation-name: show-card-vertical;
+        transition-property: flex-basis, margin-top, height;
+        &.isHidden {
+          margin-top: 0;
+          min-height: 0;
+          height: 0;
+        }
+      }
+    }
+
+    @keyframes show-card-horizontal {
       0% {
         margin-left: 0;
         flex-basis: 0;
+      }
+    }
+    @keyframes show-card-vertical {
+      0% {
+        margin-top: 0;
+        flex-basis: 0;
+        height: 0;
       }
     }
 
@@ -187,6 +235,7 @@ class PopupCardListElement extends LitElement {
 
   render() {
     return html`
+      <slot></slot>
       ${repeat(
         this.cardMap,
         ([id]) => id,

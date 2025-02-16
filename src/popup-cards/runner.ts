@@ -9,6 +9,12 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import { waitUntilNoHaDialogs } from "../helpers/dialogs.ts";
 import { TodoItemWithEntity } from "../todos/subscriber.ts";
 
+export enum DisplayMode {
+  Popup = "popup",
+  VerticalStack = "vertical-stack",
+  HorizontalStack = "horizontal-stack",
+}
+
 class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @property({ attribute: false })
   @bindEntity({ entityIdProperty: "cardListEntityId", converter: JSON.parse })
@@ -44,6 +50,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   @state()
   cardCount = 0;
 
+  @state()
+  private displayMode: DisplayMode = DisplayMode.Popup;
+
   override shouldUpdate(): boolean {
     return true; // Always update, in case cards consume other entities.
   }
@@ -70,6 +79,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       reopen_delay_ms: `${5 * 60_000}`,
       todo_entity_id: "todo.your_list",
       move_to_list_ids: "todo.long_term_tasks",
+      display_mode: DisplayMode.Popup,
     };
   }
 
@@ -92,6 +102,10 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
           ),
         )
       : undefined;
+    this.displayMode = config.display_mode ?? DisplayMode.Popup;
+    if (!Object.values(DisplayMode).includes(this.displayMode)) {
+      throw new Error(`Invalid display_mode: ${this.displayMode}`);
+    }
   }
   async connectedCallback() {
     super.connectedCallback();
@@ -113,7 +127,8 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   `;
 
   override render() {
-    if (this.editMode) return this.renderEditMode();
+    if (this.editMode && this.displayMode === DisplayMode.Popup)
+      return this.renderEditMode();
 
     if (this.browserIds?.has(window.browser_mod?.browserID ?? "") === false)
       return html`<div></div>`;
@@ -121,7 +136,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
     // After the close animation finishes, remove this element entirely.
     // This prevents us from leaking cached rendered card elements.
-    const content = html`<popup-card-list
+    let content: unknown = html`<popup-card-list
       .cardEntities=${this.cardEntities}
       .showUrgentTodosOnly=${this.showUrgentTodosOnly}
       .hass=${this.hass}
@@ -129,24 +144,43 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       .cardCount=${this.cardCount}
       .moveToListIds=${this.moveToListIds}
       @card-transitioned=${this.onCardHidden}
+      display-mode=${this.displayMode}
     >
+      ${this.displayMode !== DisplayMode.Popup && this.editMode
+        ? this.renderEditMode()
+        : null}
     </popup-card-list>`;
 
-    return html`<todo-items-subscriber
-        .hass=${this.hass}
-        entity-id=${ifDefined(this.todoEntityId)}
-        @items-updated=${this.onTodoItemsChanged}
-      ></todo-items-subscriber>
-      <ha-dialog ?open=${this.isOpen} @closed=${this.onClosed} hideActions>
-        <div class="content" dialogInitialFocus>
-          ${this.isOpen ? content : null}
-        </div>
-      </ha-dialog>`;
+    if (!this.isOpen && !this.editMode) content = null;
+
+    const subscriber = html`<todo-items-subscriber
+      .hass=${this.hass}
+      entity-id=${ifDefined(this.todoEntityId)}
+      @items-updated=${this.onTodoItemsChanged}
+    ></todo-items-subscriber>`;
+    if (this.displayMode === DisplayMode.Popup) {
+      return html` ${subscriber}
+        <ha-dialog ?open=${this.isOpen} @closed=${this.onClosed} hideActions>
+          <div class="content" dialogInitialFocus>${content}</div>
+        </ha-dialog>`;
+    }
+    return html`${subscriber} ${content}`;
   }
 
   private renderEditMode() {
+    let context;
+    switch (this.displayMode) {
+      case DisplayMode.VerticalStack:
+        context = "A vertical stack showing";
+        break;
+      case DisplayMode.HorizontalStack:
+        context = "A horizontal stack showing";
+        break;
+      case DisplayMode.Popup:
+        context = "This invisible card shows a popup with";
+    }
     return html`<ha-card style="padding: 12px;">
-      <p>This invisible card shows a popup with:</p>
+      <p>${context}:</p>
       <ul>
         ${this.renderEditModePopupInfo()} ${this.renderEditModeTodoInfo()}
         ${this.moveToListIds.map(
@@ -230,6 +264,7 @@ interface CardBehaviorOptions {
   card_list_entity_id?: string;
   show_urgent_todos_only?: boolean;
   move_to_list_ids?: string | string[];
+  display_mode?: DisplayMode;
 }
 interface CardBrowserSpec extends CardBehaviorOptions {
   browser_id: string;

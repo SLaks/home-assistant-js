@@ -8,6 +8,9 @@ export default defineConfig({
       output: { entryFileNames: "slaks-ui.js" },
     },
   },
+  server: {
+    cors: { origin: /.*\.slaks.net/ },
+  },
   plugins: [
     hmrPlugin({
       include: ["./src/**/*.ts"],
