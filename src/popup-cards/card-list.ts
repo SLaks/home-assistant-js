@@ -186,8 +186,8 @@ class PopupCardListElement extends LitElement {
       }
     }
 
-    :host([display-mode="popup"]),
-    :host([display-mode="horizontal-stack"]) {
+    :host-context([display-mode="popup"]),
+    :host-context([display-mode="horizontal-stack"]) {
       .CardWrapper {
         animation-name: show-card-horizontal;
         transition-property: flex-basis, margin-left, width;
@@ -198,7 +198,7 @@ class PopupCardListElement extends LitElement {
         }
       }
     }
-    :host([display-mode="vertical-stack"]) {
+    :host-context([display-mode="vertical-stack"]) {
       .CardWrapper {
         animation-name: show-card-vertical;
         transition-property: flex-basis, margin-top, height;
