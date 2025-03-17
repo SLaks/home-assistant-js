@@ -63,7 +63,7 @@ type GroupedListElement =
   | (TodoItemWithEntity & { type?: undefined })
   | CategoryHeader;
 
-class ToboBuilderElement extends LitElement {
+class TodoBuilderElement extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @property({ attribute: "target-list-id" })
   targetListId: string = "";
@@ -578,6 +578,8 @@ class ToboBuilderElement extends LitElement {
             /** Return true to _cancel_ the drag. */
             filter(e: PointerEvent, dragEl: HTMLElement) {
               if (e.pointerType !== "touch") return false;
+              // Allow users to check checkboxes without dragging.
+              if (e.composedPath().some(isCheckbox)) return true;
               console.log(e);
               const rect = dragEl.getBoundingClientRect();
               const x = e.clientX - rect.x;
@@ -798,4 +800,8 @@ class ToboBuilderElement extends LitElement {
   }
 }
 
-customElements.define("todo-builder", ToboBuilderElement);
+function isCheckbox(el: EventTarget): boolean {
+  return el instanceof HTMLElement && el.classList.contains("mdc-checkbox");
+}
+
+customElements.define("todo-builder", TodoBuilderElement);
