@@ -135,15 +135,6 @@ class TodoBuilderElement extends LitElement {
         );
       }
     }
-
-    if (
-      changedProperties.has("targetList") ||
-      changedProperties.has("fullLongTermList")
-    ) {
-      // After dragging an item from the template list, recreate it to
-      // fix SortableJS clones.
-      this.templateVersion = `${this.targetList.length}-${this.fullLongTermList.length}`;
-    }
     if (
       changedProperties.has("targetList") ||
       changedProperties.has("targetDays")
@@ -168,6 +159,19 @@ class TodoBuilderElement extends LitElement {
       this.longTermRenderHash = this.longTermList
         .map((item) => item.uid)
         .join();
+    }
+
+    if (
+      changedProperties.has("targetList") ||
+      changedProperties.has("fullLongTermList")
+    ) {
+      // After dragging an item from the template list, recreate it to
+      // fix SortableJS clones.
+      // Only count visible items, because Google Tasks caps lists at 100
+      // items, so the full count won't change.
+      this.templateVersion = `${sum(this.daySections, (dc) =>
+        sum(dc, (ds) => ds.items.length),
+      )}-${this.longTermList.length}`;
     }
   }
 
@@ -802,6 +806,10 @@ class TodoBuilderElement extends LitElement {
 
 function isCheckbox(el: EventTarget): boolean {
   return el instanceof HTMLElement && el.classList.contains("mdc-checkbox");
+}
+
+function sum<T>(array: T[], cb: (item: T) => number): number {
+  return array.reduce((sum, item) => sum + cb(item), 0);
 }
 
 customElements.define("todo-builder", TodoBuilderElement);
