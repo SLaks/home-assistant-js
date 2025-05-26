@@ -7,7 +7,7 @@ import {
   LovelaceViewConfig,
 } from "custom-card-helpers";
 import { css, html, LitElement, PropertyValues } from "lit";
-import { property, state } from "lit/decorators.js";
+import { property, query, state } from "lit/decorators.js";
 import { CardHelpers } from "../types";
 import { shouldShowTodoCard } from "./todo-cards/due-times";
 import { classMap } from "lit/directives/class-map.js";
@@ -24,6 +24,9 @@ const MIN_CARD_WIDTH = 200;
 
 /** Renders a list of entity IDs as popup cards */
 class PopupCardListElement extends LitElement {
+  @query(".Root")
+  private root?: HTMLElement;
+
   @property({ attribute: "display-mode" })
   displayMode: DisplayMode = DisplayMode.Popup;
 
@@ -73,6 +76,10 @@ class PopupCardListElement extends LitElement {
     if (changedProps.has("cardCount")) this.calculateCardWidth();
     this.cardMap.forEach((card) => (card.hass = this.hass));
   }
+  protected override updated(_changedProperties: PropertyValues): void {
+    super.updated(_changedProperties);
+    this.calculateCardWidth();
+  }
 
   /**
    * Calculates the ideal width for the densest row of cards.
@@ -83,10 +90,11 @@ class PopupCardListElement extends LitElement {
    * to maximize the width of the row with the most cards after rounding.
    */
   private calculateCardWidth() {
+    if (!this.root) return;
     if (this.displayMode === DisplayMode.VerticalStack) return;
     const outerWidth =
       this.displayMode === DisplayMode.Popup
-        ? parseInt(getComputedStyle(this).maxWidth)
+        ? parseInt(getComputedStyle(this.root).maxWidth)
         : this.offsetWidth;
     // Note: This includes the negative margin that cancels the first card's spacing.
     // This lets us treat the card spacing as part of the card when dividing.
@@ -97,17 +105,17 @@ class PopupCardListElement extends LitElement {
       (this.cardCount * (MIN_CARD_WIDTH + CARD_SPACING)) / availableWidth,
     );
     const cardsPerRow = Math.ceil(this.cardCount / rowCount);
-    this.style.setProperty(
+    this.root.style.setProperty(
       "--popup-card-actual-width",
       `${Math.min(
         // Subtract the spacing, which is not part of the width.
         availableWidth / cardsPerRow - CARD_SPACING,
         parseInt(
-          getComputedStyle(this).getPropertyValue("--popup-card-width"),
+          getComputedStyle(this.root).getPropertyValue("--popup-card-width"),
         ) || BASE_CARD_WIDTH,
       )}px`,
     );
-    this.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
+    this.root.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
   }
 
   private updateTodos() {
@@ -130,7 +138,7 @@ class PopupCardListElement extends LitElement {
   }
 
   static styles = css`
-    :host {
+    .Root {
       --transition-func: cubic-bezier(0.4, 0, 0.2, 1);
       --transition-duration: 0.3s;
       display: flex;
@@ -141,12 +149,12 @@ class PopupCardListElement extends LitElement {
       margin-top: -${CARD_SPACING}px;
     }
 
-    :host([display-mode="popup"]) {
+    .Root[display-mode="popup"] {
       max-width: 80vw;
       max-height: 80vh;
     }
 
-    :host([display-mode="vertical-stack"]) {
+    .Root[display-mode="vertical-stack"] {
       flex-direction: column;
     }
 
@@ -186,8 +194,8 @@ class PopupCardListElement extends LitElement {
       }
     }
 
-    :host-context([display-mode="popup"]),
-    :host-context([display-mode="horizontal-stack"]) {
+    .Root[display-mode="popup"],
+    .Root[display-mode="horizontal-stack"] {
       .CardWrapper {
         animation-name: show-card-horizontal;
         transition-property: flex-basis, margin-left, width;
@@ -198,7 +206,7 @@ class PopupCardListElement extends LitElement {
         }
       }
     }
-    :host-context([display-mode="vertical-stack"]) {
+    .Root[display-mode="vertical-stack"] {
       .CardWrapper {
         animation-name: show-card-vertical;
         transition-property: flex-basis, margin-top, height;
@@ -235,42 +243,44 @@ class PopupCardListElement extends LitElement {
 
   render() {
     return html`
-      <slot></slot>
-      ${repeat(
-        this.cardMap,
-        ([id]) => id,
-        ([id, card]) => {
-          const isHidden = !this.cardsToRender.includes(id);
-          return html`<div
-            class="CardWrapper ${classMap({ isHidden })}"
-            @transitionend=${this.onCardTransitionEnd}
-          >
-            ${card} ${isHidden ? html`<span></span>` : null}
-          </div>`;
-        },
-      )}
-      <!-- Render a different element to prevent cards of different types from morphing into eachother. -->
-      <span></span>
-      ${repeat(
-        this.todoMap.values(),
-        ({ uid }) => uid,
-        (item) => {
-          const isHidden =
-            !shouldShowTodoCard(item, this.showUrgentTodosOnly) ||
-            this.deletedTodos.has(item.uid);
-          return html`<div
-            class="CardWrapper ${classMap({ isHidden })}"
-            @transitionend=${this.onCardTransitionEnd}
-          >
-            <popup-todo-card
-              .hass=${this.hass}
-              .item=${item}
-              .moveToListIds=${this.moveToListIds}
-            ></popup-todo-card>
-          </div>`;
-        },
-      )}
-      ${this.renderErrorCard()}
+      <div class="Root" display-mode=${this.displayMode}>
+        <slot></slot>
+        ${repeat(
+          this.cardMap,
+          ([id]) => id,
+          ([id, card]) => {
+            const isHidden = !this.cardsToRender.includes(id);
+            return html`<div
+              class="CardWrapper ${classMap({ isHidden })}"
+              @transitionend=${this.onCardTransitionEnd}
+            >
+              ${card} ${isHidden ? html`<span></span>` : null}
+            </div>`;
+          },
+        )}
+        <!-- Render a different element to prevent cards of different types from morphing into eachother. -->
+        <span></span>
+        ${repeat(
+          this.todoMap.values(),
+          ({ uid }) => uid,
+          (item) => {
+            const isHidden =
+              !shouldShowTodoCard(item, this.showUrgentTodosOnly) ||
+              this.deletedTodos.has(item.uid);
+            return html`<div
+              class="CardWrapper ${classMap({ isHidden })}"
+              @transitionend=${this.onCardTransitionEnd}
+            >
+              <popup-todo-card
+                .hass=${this.hass}
+                .item=${item}
+                .moveToListIds=${this.moveToListIds}
+              ></popup-todo-card>
+            </div>`;
+          },
+        )}
+        ${this.renderErrorCard()}
+      </div>
     `;
   }
 
