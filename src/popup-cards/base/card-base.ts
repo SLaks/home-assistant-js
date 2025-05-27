@@ -15,12 +15,13 @@ class PopupCardBase extends LitElement {
       max-width: var(--popup-card-width, 400px);
 
       --panel-radius: 16px;
-      background: var(
-        --popup-card-background-color,
-        var(--paper-item-icon-color)
-      );
+      /* 
+       * This ought to fall back to var(--secondary-background-color), 
+       * but most themes make that the same as primary. 
+       */
+      background: var(--popup-card-background-color, rgba(0, 0, 0, 0.2));
 
-      color: var(--popup-card-text-color, var(--primary-background-color));
+      color: var(--popup-card-text-color, var(--primary-text-color));
       overflow: hidden;
 
       display: flex;
