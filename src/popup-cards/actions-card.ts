@@ -1,3 +1,4 @@
+import "../helpers/slaks-button";
 import { property, state } from "lit/decorators.js";
 import { bindEntity, SimpleEntityBasedElement } from "../base-elements";
 import { css, html } from "lit";
@@ -63,9 +64,9 @@ class ActionsCardElement extends SimpleEntityBasedElement {
         <div slot="actions" class="Buttons">
           ${this.spec?.actions?.map(
             (a) => html`
-              <mwc-button raised @click=${() => this.handleAction(a)}>
+              <slaks-button raised @click=${() => this.handleAction(a)}>
                 ${a.title}
-              </mwc-button>
+              </slaks-button>
             `,
           )}
         </div>

@@ -155,15 +155,15 @@ class PopupTodoSnoozerElement extends LitElement {
           this.snoozeTo(entry.options[e.detail.index].date)}
         fixed
       >
-        <mwc-button slot="trigger" raised fullwidth>${entry.label}</mwc-button>
+        <slaks-button slot="trigger" raised>${entry.label}</slaks-button>
         ${entry.options.map(
           (o) => html`<ha-list-item>${o.label}</ha-list-item>`,
         )}
       </ha-button-menu>`;
     }
-    return html`<mwc-button @click=${() => this.snoozeTo(entry.date)} raised>
+    return html`<slaks-button @click=${() => this.snoozeTo(entry.date)} raised>
       ${entry.label}
-    </mwc-button>`;
+    </slaks-button>`;
   }
 
   private delete() {

@@ -61,12 +61,6 @@ class PopupCardBase extends LitElement {
         --mdc-theme-primary: var(--mdc-theme-surface);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 
-        /* Make mwc-button look consistent: */
-        --mdc-theme-on-primary: var(--primary-text-color);
-        --mdc-theme-primary: var(
-          --ha-card-background,
-          var(--card-background-color, #fff)
-        );
         --mdc-ripple-hover-opacity: var(--ha-ripple-hover-opacity, 0.08);
         --mdc-ripple-pressed-opacity: var(--ha-ripple-pressed-opacity, 0.12);
         --mdc-ripple-color: var(
