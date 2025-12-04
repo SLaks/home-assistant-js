@@ -1,3 +1,4 @@
+import "../helpers/scroll-container";
 import "./todo-cards/popup-todo-card";
 import {
   HomeAssistant,
@@ -138,6 +139,15 @@ class PopupCardListElement extends LitElement {
   }
 
   static styles = css`
+    :host {
+      /* 
+       * Make this element the containing block for
+       * position: fixed shadows in ScrollContainer
+       */
+      transform: translate(0, 0);
+      display: block;
+    }
+
     .Root {
       --transition-func: cubic-bezier(0.4, 0, 0.2, 1);
       --transition-duration: 0.3s;
@@ -243,7 +253,7 @@ class PopupCardListElement extends LitElement {
 
   render() {
     return html`
-      <div class="Root" display-mode=${this.displayMode}>
+      <scroll-container class="Root" display-mode=${this.displayMode}>
         <slot></slot>
         ${repeat(
           this.cardMap,
@@ -280,7 +290,7 @@ class PopupCardListElement extends LitElement {
           },
         )}
         ${this.renderErrorCard()}
-      </div>
+      </scroll-container>
     `;
   }
 
