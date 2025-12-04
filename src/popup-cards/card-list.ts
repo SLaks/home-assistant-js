@@ -154,6 +154,8 @@ class PopupCardListElement extends LitElement {
       display: flex;
       justify-content: center;
       overflow: auto;
+      scroll-snap-type: y mandatory;
+      scroll-padding-top: ${CARD_SPACING}px;
 
       margin-left: -${CARD_SPACING}px;
       margin-top: -${CARD_SPACING}px;
@@ -176,6 +178,7 @@ class PopupCardListElement extends LitElement {
     }
 
     .CardWrapper {
+      scroll-snap-align: start;
       /* 
        * Use flex-grow to make rows with fewer items grow past the fixed width.
        * Use max-width to prevent them from growing wider than the contained card.
