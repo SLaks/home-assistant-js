@@ -1,16 +1,11 @@
 import "./target-days";
 import { HomeAssistant } from "custom-card-helpers/dist/types";
 import { property, state } from "lit/decorators.js";
-import { css, html, LitElement, PropertyValues } from "lit";
+import { css, html, LitElement, PropertyValues, TemplateResult } from "lit";
 import { DateMenu, DateOption, TodoTargetDetails } from "./target-days";
 import { TodoItemWithEntity } from "../../todos/subscriber";
 import { createItem, deleteItems, updateItem } from "../../todos/ha-api";
 import { applyTodoActions } from "./todo-actions";
-
-interface MenuItem {
-  item: unknown;
-  handler(): void;
-}
 
 class PopupTodoSnoozerElement extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
@@ -27,7 +22,7 @@ class PopupTodoSnoozerElement extends LitElement {
   snoozeMenu: DateOption[] = [];
 
   @state()
-  actionMenu: MenuItem[] = [];
+  actionMenu: TemplateResult[] = [];
 
   onTargetDaysUpdated(e: CustomEvent<TodoTargetDetails>) {
     this.snoozeButtons = e.detail.quickOptions;
@@ -36,44 +31,46 @@ class PopupTodoSnoozerElement extends LitElement {
   protected override willUpdate(_changedProperties: PropertyValues): void {
     super.willUpdate(_changedProperties);
     this.actionMenu = [
-      ...this.snoozeMenu.map((d) => ({
-        item: html`<ha-list-item graphic="icon"> ${d.label} </ha-list-item>`,
-        handler: () => this.snoozeTo(d.date),
-      })),
-      ...this.moveToListIds.map((listId, index) => {
-        const list = this.hass!.states[listId] || {};
-        return {
-          item: html` ${index === 0
-              ? html`<li divider role="separator"></li>`
-              : ""}
-            <ha-list-item graphic="icon">
-              <ha-icon
-                icon=${list.attributes?.icon || "mdi:clipboard-list"}
-                slot="graphic"
-              ></ha-icon>
-              Move to ${list.attributes?.friendly_name || listId}
-            </ha-list-item>`,
-          handler: () => this.moveTo(listId),
-        };
-      }),
-      {
-        item: html`<li divider role="separator"></li>
-          <ha-list-item graphic="icon">
+      html`<h4>Snooze until</h4>`,
+      ...this.snoozeMenu.map(
+        (d) =>
+          html`<ha-dropdown-item .slaksHandler=${() => this.snoozeTo(d.date)}>
             <ha-icon
-              icon="mdi:alert-${this.isUrgent ? "minus" : "plus"}"
-              slot="graphic"
+              icon="mdi:calendar-today"
+              style="opacity: 0"
+              slot="icon"
             ></ha-icon>
-            ${this.isUrgent ? "Not urgent" : "Mark as urgent"}
-          </ha-list-item>`,
-        handler: () => this.toggleUrgent(),
-      },
-      {
-        item: html`<ha-list-item graphic="icon" class="Warning">
-          <ha-icon class="Warning" icon="mdi:delete" slot="graphic"></ha-icon>
-          Delete
-        </ha-list-item>`,
-        handler: () => this.delete(),
-      },
+            ${d.label}
+          </ha-dropdown-item>`,
+      ),
+      html`<wa-divider></wa-divider>`,
+      ...this.moveToListIds.map((listId) => {
+        const list = this.hass!.states[listId] || {};
+        return html`<ha-dropdown-item
+          .slaksHandler=${() => this.moveTo(listId)}
+        >
+          <ha-icon
+            icon=${list.attributes?.icon || "mdi:clipboard-list"}
+            slot="icon"
+          ></ha-icon>
+          Move to ${list.attributes?.friendly_name || listId}
+        </ha-dropdown-item>`;
+      }),
+      html`<wa-divider></wa-divider>`,
+      html`<ha-dropdown-item .slaksHandler=${() => this.toggleUrgent()}>
+        <ha-icon
+          icon="mdi:alert-${this.isUrgent ? "minus" : "plus"}"
+          slot="icon"
+        ></ha-icon>
+        ${this.isUrgent ? "Not urgent" : "Mark as urgent"}
+      </ha-dropdown-item>`,
+      html`<ha-dropdown-item
+        variant="danger"
+        .slaksHandler=${() => this.delete()}
+      >
+        <ha-icon icon="mdi:delete" slot="icon"></ha-icon>
+        Delete
+      </ha-dropdown-item>`,
     ];
   }
 
@@ -104,36 +101,18 @@ class PopupTodoSnoozerElement extends LitElement {
       > * {
         flex-grow: 1;
       }
-      .IconMenu {
-        flex-grow: 0;
-      }
-    }
-
-    .MenuButtonIcon {
-      display: flex;
-      justify-content: center;
-    }
-
-    .Warning {
-      color: var(--error-color);
     }
   `;
   protected override render(): unknown {
-    const menuButton = html`<ha-button-menu
-      class="IconMenu"
-      @action=${(e: CustomEvent) => {
-        this.actionMenu[e.detail.index].handler();
+    const menuButton = html`<ha-dropdown
+      @wa-select=${(e: CustomEvent) => {
+        console.log(e);
+        e.detail.item.slaksHandler();
       }}
-      corner="BOTTOM_END"
-      menu-corner="END"
-      fixed
     >
-      <ha-icon-button slot="trigger" label="More">
-        <ha-icon class="MenuButtonIcon" icon="mdi:dots-vertical"></ha-icon>
-      </ha-icon-button>
-
-      ${this.actionMenu.map(({ item }) => item)}
-    </ha-button-menu>`;
+      <slaks-button slot="trigger" raised>More…</slaks-button>
+      ${this.actionMenu}
+    </ha-dropdown>`;
 
     return html`
       <todo-target-days
@@ -150,16 +129,17 @@ class PopupTodoSnoozerElement extends LitElement {
 
   private renderSnoozeButton(entry: DateOption | DateMenu) {
     if (entry.type === "menu") {
-      return html`<ha-button-menu
-        @action=${(e: CustomEvent) =>
-          this.snoozeTo(entry.options[e.detail.index].date)}
-        fixed
+      return html`<ha-dropdown
+        @wa-select=${(e: CustomEvent) => this.snoozeTo(e.detail.item.date)}
       >
         <slaks-button slot="trigger" raised>${entry.label}</slaks-button>
         ${entry.options.map(
-          (o) => html`<ha-list-item>${o.label}</ha-list-item>`,
+          (o) =>
+            html`<ha-dropdown-item .date=${o.date}>
+              ${o.label}
+            </ha-dropdown-item>`,
         )}
-      </ha-button-menu>`;
+      </ha-dropdown>`;
     }
     return html`<slaks-button @click=${() => this.snoozeTo(entry.date)} raised>
       ${entry.label}

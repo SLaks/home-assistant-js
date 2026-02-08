@@ -91,7 +91,7 @@ class TodoTargetDaysElement extends SimpleEntityBasedElement {
     if (!this.isErev) {
       const times = this.computeTimeMenu();
       if (times.length)
-        options.push({ type: "menu", label: "Today at...", options: times });
+        options.push({ type: "menu", label: "Today at…", options: times });
     }
     options.push({
       label: this.isErev ? this.motzeiLabel() : "Tomorrow",
