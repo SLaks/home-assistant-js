@@ -98,7 +98,7 @@ class PopupTodoSnoozerElement extends LitElement {
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
-      > * {
+      > *, slaks-button {
         flex-grow: 1;
       }
     }
@@ -130,6 +130,7 @@ class PopupTodoSnoozerElement extends LitElement {
   private renderSnoozeButton(entry: DateOption | DateMenu) {
     if (entry.type === "menu") {
       return html`<ha-dropdown
+        placement="bottom-center"
         @wa-select=${(e: CustomEvent) => this.snoozeTo(e.detail.item.date)}
       >
         <slaks-button slot="trigger" raised>${entry.label}</slaks-button>
