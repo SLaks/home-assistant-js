@@ -117,12 +117,13 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
   static styles = css`
     :host {
-      --mdc-dialog-min-width: 30px;
-      --mdc-dialog-max-width: 90vw;
+      --ha-dialog-width-full: 80vw;
     }
     /* Don't let the height change after the cards are removed. */
     .content {
       min-height: var(--popup-card-height, 300px);
+      /* Match the padding on the other sides of ha-dialog. */
+      padding-top: var(--ha-space-6);
     }
   `;
 
@@ -160,7 +161,12 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     ></todo-items-subscriber>`;
     if (this.displayMode === DisplayMode.Popup) {
       return html` ${subscriber}
-        <ha-dialog ?open=${this.isOpen} @closed=${this.onClosed} hideActions>
+        <ha-dialog
+          ?open=${this.isOpen}
+          width="full"
+          @wa-after-hide=${this.onClosed}
+          without-header
+        >
           <div class="content" dialogInitialFocus>${content}</div>
         </ha-dialog>`;
     }

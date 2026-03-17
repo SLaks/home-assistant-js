@@ -162,7 +162,7 @@ class PopupCardListElement extends LitElement {
     }
 
     .Root[display-mode="popup"] {
-      max-width: 80vw;
+      max-width: var(--width, 80vw);
       max-height: 80vh;
     }
 
