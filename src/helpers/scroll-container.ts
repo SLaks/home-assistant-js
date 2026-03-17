@@ -20,7 +20,7 @@ export class ScrollContainer extends LitElement {
       position: fixed;
       left: 0;
       right: 0;
-      height: 32px;
+      height: 96px;
       pointer-events: none;
       z-index: 1;
       transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
