@@ -117,7 +117,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
 
   static styles = css`
     :host {
-      --ha-dialog-width-full: 80vw;
+      --ha-dialog-width-full: fit-content;
     }
     /* Don't let the height change after the cards are removed. */
     .content {
@@ -164,7 +164,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
         <ha-dialog
           ?open=${this.isOpen}
           width="full"
-          @wa-after-hide=${this.onClosed}
+          @closed=${this.onClosed}
           without-header
         >
           <div class="content" dialogInitialFocus>${content}</div>

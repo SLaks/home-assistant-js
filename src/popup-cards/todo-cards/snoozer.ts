@@ -105,10 +105,7 @@ class PopupTodoSnoozerElement extends LitElement {
   `;
   protected override render(): unknown {
     const menuButton = html`<ha-dropdown
-      @wa-select=${(e: CustomEvent) => {
-        console.log(e);
-        e.detail.item.slaksHandler();
-      }}
+      @wa-select=${(e: CustomEvent) => e.detail.item.slaksHandler()}
     >
       <slaks-button slot="trigger" raised>More…</slaks-button>
       ${this.actionMenu}

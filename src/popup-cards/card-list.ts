@@ -116,6 +116,7 @@ class PopupCardListElement extends LitElement {
         ) || BASE_CARD_WIDTH,
       )}px`,
     );
+    this.root.style.setProperty("--popup-card-column-count", `${cardsPerRow}`);
     this.root.style.flexWrap = rowCount > 1 ? "wrap" : "nowrap";
   }
 
@@ -146,6 +147,7 @@ class PopupCardListElement extends LitElement {
        */
       transform: translate(0, 0);
       display: block;
+      scrollbar-width: ${CARD_SPACING}px;
     }
 
     .Root {
@@ -162,7 +164,13 @@ class PopupCardListElement extends LitElement {
     }
 
     .Root[display-mode="popup"] {
-      max-width: var(--width, 80vw);
+      max-width: 80vw;
+      /* Explicitly set a width, so the wa-dialog shrinks to fit. */
+      /* Add an extra multiple of CARD_SPACING for the scrollbar. */
+      width: calc(
+        var(--popup-card-column-count) *
+          (${CARD_SPACING}px + var(--popup-card-actual-width))
+      );
       max-height: 80vh;
     }
 
