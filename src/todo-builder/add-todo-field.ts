@@ -19,6 +19,7 @@ class AddTodoFieldElement extends LitElement {
     }
     ha-textfield {
       flex-grow: 1;
+      overflow: hidden;
     }
     ha-icon-button {
       position: absolute;
