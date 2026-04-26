@@ -294,6 +294,7 @@ class ManualPopupCardsElement extends LitElement {
     return html`<popup-card-list
       .hass=${this.hass}
       .cardEntities=${this.cardEntities}
+      .cardCount=${this.cardEntities.length}
     ></popup-card-list>`;
   }
 }
