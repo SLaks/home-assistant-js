@@ -17,15 +17,13 @@ class AddTodoFieldElement extends LitElement {
       align-items: center;
       position: relative;
     }
-    ha-textfield {
+    ha-input {
       flex-grow: 1;
       overflow: hidden;
     }
     ha-icon-button {
-      position: absolute;
-      inset-inline-start: initial;
-      inset-inline-end: 3px;
-      right: 3px;
+      --ha-icon-button-size: 32px;
+      margin-right: -8px;
     }
 
     .buttonIcon {
@@ -37,14 +35,20 @@ class AddTodoFieldElement extends LitElement {
   override render() {
     // HTML and CSS structure are copied from HA's src/panels/lovelace/cards/hui-todo-list-card.ts
     return html`
-      <ha-textfield
+      <ha-input
         class="addBox"
         placeholder=${this.placeholder}
         @keydown=${this._addKeyPress}
-      ></ha-textfield>
-      <ha-icon-button class="addButton" title="Add" @click=${this.addItem}>
-        <ha-icon class="buttonIcon" icon="mdi:plus"></ha-icon>
-      </ha-icon-button>
+      >
+        <ha-icon-button
+          slot="end"
+          class="addButton"
+          title="Add"
+          @click=${this.addItem}
+        >
+          <ha-icon class="buttonIcon" icon="mdi:plus"></ha-icon>
+        </ha-icon-button>
+      </ha-input>
     `;
   }
 

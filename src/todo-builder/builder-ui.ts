@@ -327,7 +327,8 @@ class TodoBuilderElement extends LitElement {
 
       background-color: var(--error-color);
       overflow: hidden;
-      box-shadow: 0 10px 20px rgba(255, 255, 255, 0.09),
+      box-shadow:
+        0 10px 20px rgba(255, 255, 255, 0.09),
         0 6px 6px rgba(255, 255, 255, 0.11);
 
       display: flex;
@@ -392,6 +393,7 @@ class TodoBuilderElement extends LitElement {
 
       ha-check-list-item {
         padding-right: 8px;
+        padding-left: 15px;
       }
 
       /* When dropping: */
@@ -506,9 +508,10 @@ class TodoBuilderElement extends LitElement {
       ${this.renderDeleteTarget()} ${this.renderLongTerm()}
       <div class="Days" @drag-start=${this.onDragStart}>
         ${[...this.daySections].map(
-          (sections) => html`<div class="Column Panel">
-            ${sections.map((section) => this.renderSection(section))}
-          </div>`,
+          (sections) =>
+            html`<div class="Column Panel">
+              ${sections.map((section) => this.renderSection(section))}
+            </div>`,
         )}
       </div>
     `;
