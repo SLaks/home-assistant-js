@@ -39,6 +39,7 @@ class AddTodoFieldElement extends LitElement {
         class="addBox"
         placeholder=${this.placeholder}
         @keydown=${this._addKeyPress}
+        enterkeyhint="done"
       >
         <ha-icon-button
           slot="end"
