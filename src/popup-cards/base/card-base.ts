@@ -1,5 +1,5 @@
 import { css, html, LitElement } from "lit";
-import { property } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 
 class PopupCardBase extends LitElement {
@@ -8,6 +8,15 @@ class PopupCardBase extends LitElement {
 
   @property({ type: Boolean, attribute: "not-clickable" })
   notClickable = false;
+
+  @state()
+  private hasActions = false;
+
+  private onSlotChange(e: Event) {
+    const slot = e.target as HTMLSlotElement;
+    const assigned = slot.assignedElements();
+    this.hasActions = assigned.length > 0;
+  }
 
   static styles = css`
     .Card {
@@ -29,6 +38,12 @@ class PopupCardBase extends LitElement {
       align-items: center;
       padding: 12px;
       gap: 12px;
+
+      &:has(.Actions[hidden]) {
+        /* If there are no actions, let the main content fill the entire card. */
+        padding: 0;
+        background: none;
+      }
 
       font-size: 1.2rem;
       text-align: center;
@@ -59,7 +74,9 @@ class PopupCardBase extends LitElement {
         border-radius: var(--panel-radius);
         padding: 12px;
         --mdc-theme-primary: var(--mdc-theme-surface);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.12),
+          0 1px 2px rgba(0, 0, 0, 0.24);
 
         --mdc-ripple-hover-opacity: var(--ha-ripple-hover-opacity, 0.08);
         --mdc-ripple-pressed-opacity: var(--ha-ripple-pressed-opacity, 0.12);
@@ -83,12 +100,13 @@ class PopupCardBase extends LitElement {
         ${this.notClickable ? null : html`<md-ripple></md-ripple>`}
         <div
           class="Actions"
+          ?hidden=${!this.hasActions}
           @keydown=${(e: Event) => e.stopPropagation()}
           @closed=${(e: Event) => e.stopPropagation()}
           @pointerdown=${(e: Event) => e.stopPropagation()}
           @click=${(e: Event) => e.stopPropagation()}
         >
-          <slot name="actions"></slot>
+          <slot name="actions" @slotchange=${this.onSlotChange}></slot>
         </div>
       </ha-card>
     `;

@@ -36,6 +36,8 @@ class PopupCardListElement extends LitElement {
 
   @property({ attribute: false, type: Array })
   moveToListIds: string[] = [];
+  @property({ attribute: "show-snooze-ui", type: Boolean })
+  showSnoozeUi = true;
 
   @property({ attribute: false, type: Array })
   cardEntities: string[] = [];
@@ -296,6 +298,7 @@ class PopupCardListElement extends LitElement {
                 .hass=${this.hass}
                 .item=${item}
                 .moveToListIds=${this.moveToListIds}
+                .showSnoozeUi=${this.showSnoozeUi}
               ></popup-todo-card>
             </div>`;
           },

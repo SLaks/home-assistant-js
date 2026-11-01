@@ -13,6 +13,8 @@ import { classMap } from "lit/directives/class-map.js";
 class PopupTodoCard extends LitElement {
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) item?: TodoItemWithEntity;
+  @property({ attribute: "show-snooze-ui", type: Boolean })
+  showSnoozeUi = true;
 
   @property({ attribute: false, type: Array })
   moveToListIds: string[] = [];
@@ -66,13 +68,15 @@ class PopupTodoCard extends LitElement {
         <popup-todo-icon slot="icon" .hass=${this.hass} .item=${this.item}>
         </popup-todo-icon>
         <div slot="name">${this.item.summary}</div>
-        <popup-todo-snoozer
-          slot="actions"
-          .moveToListIds=${this.moveToListIds}
-          .isUrgent=${this.isUrgent}
-          .hass=${this.hass}
-          .item=${this.item}
-        ></popup-todo-snoozer>
+        ${this.showSnoozeUi
+          ? html`<popup-todo-snoozer
+              slot="actions"
+              .moveToListIds=${this.moveToListIds}
+              .isUrgent=${this.isUrgent}
+              .hass=${this.hass}
+              .item=${this.item}
+            ></popup-todo-snoozer>`
+          : null}
       </popup-card-base>
     `;
   }

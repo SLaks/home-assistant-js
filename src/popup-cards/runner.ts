@@ -39,6 +39,9 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
   cardListEntityId?: string;
 
   @state()
+  showSnoozeUi = true;
+
+  @state()
   private editMode = false;
 
   @state()
@@ -95,6 +98,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
     this.cardListEntityId = config.card_list_entity_id;
     this.showUrgentTodosOnly = !!config.show_urgent_todos_only;
     this.moveToListIds = [config.move_to_list_ids ?? []].flat();
+    this.showSnoozeUi = config.hide_snooze_ui !== true;
     this.browserIds = config.browser_ids
       ? new Set(
           config.browser_ids.map((b) =>
@@ -144,6 +148,7 @@ class PopupCardRunnerElement extends SimpleEntityBasedElement {
       .todoItems=${this.todoItems}
       .cardCount=${this.cardCount}
       .moveToListIds=${this.moveToListIds}
+      .showSnoozeUi=${this.showSnoozeUi}
       @card-transitioned=${this.onCardHidden}
       display-mode=${this.displayMode}
     >
@@ -271,6 +276,7 @@ interface CardBehaviorOptions {
   show_urgent_todos_only?: boolean;
   move_to_list_ids?: string | string[];
   display_mode?: DisplayMode;
+  hide_snooze_ui?: boolean;
 }
 interface CardBrowserSpec extends CardBehaviorOptions {
   browser_id: string;
