@@ -36,8 +36,8 @@ class PopupCardBase extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px;
-      gap: 12px;
+      padding: var(--popup-card-spacing, 12px);
+      gap: var(--popup-card-spacing, 12px);
 
       &:has(.Actions[hidden]) {
         /* If there are no actions, let the main content fill the entire card. */
@@ -59,6 +59,7 @@ class PopupCardBase extends LitElement {
         display: flex;
         place-content: center;
         min-height: 0;
+        align-self: var(--popup-card-icon-align);
       }
 
       &.isCompleted {
@@ -71,7 +72,7 @@ class PopupCardBase extends LitElement {
         flex-shrink: 0;
         background: var(--primary-background-color);
         color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
-        border-radius: var(--panel-radius);
+        border-radius: var(--popup-card-actions-radius, var(--panel-radius));
         padding: 12px;
         --mdc-theme-primary: var(--mdc-theme-surface);
         box-shadow:
@@ -97,7 +98,7 @@ class PopupCardBase extends LitElement {
         <div class="Name">
           <slot name="name"></slot>
         </div>
-        ${this.notClickable ? null : html`<md-ripple></md-ripple>`}
+        ${this.notClickable ? null : html`<ha-ripple></ha-ripple>`}
         <div
           class="Actions"
           ?hidden=${!this.hasActions}

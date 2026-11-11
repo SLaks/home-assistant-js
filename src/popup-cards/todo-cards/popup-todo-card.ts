@@ -44,6 +44,15 @@ class PopupTodoCard extends LitElement {
     popup-card-base:has(.HasImage) {
       /* When there is an image, the image displays the name instead. */
       --popup-card-name-display: none;
+      /* Make the image cover the entire card, with the actions panel at the bottom. */
+      --popup-card-icon-align: stretch;
+      --popup-card-actions-radius: 0;
+      --popup-card-spacing: 0;
+      /* 
+       * Therefore, use the outer background for the actions panel,
+       * so it will contrast with the background of the card list.
+       */
+      --primary-background-color: var(--popup-card-background-color);
     }
 
     .Urgent {
@@ -52,7 +61,6 @@ class PopupTodoCard extends LitElement {
     }
 
     popup-todo-icon.HasImage {
-      border-radius: var(--panel-radius);
       overflow: hidden;
     }
   `;
