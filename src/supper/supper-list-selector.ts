@@ -225,7 +225,7 @@ export class SupperListSelectorElement extends SimpleEntityBasedElement {
           ${supper.actions.map((a) => this.renderSupperAction(a))}
         </div>
       </div>
-      <md-ripple></md-ripple>
+      <ha-ripple></ha-ripple>
     </div>`;
   }
 

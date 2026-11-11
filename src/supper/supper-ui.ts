@@ -157,7 +157,7 @@ export class SupperSelectorElement extends SimpleEntityBasedElement {
             @click=${() => history.back()}
           >
             <ha-icon icon="mdi:arrow-left-circle"></ha-icon>
-            <md-ripple></md-ripple>
+            <ha-ripple></ha-ripple>
           </a>
           ${this.allDates.map(
             (d) =>

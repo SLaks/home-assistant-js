@@ -26,7 +26,7 @@ class SLaksButton extends LitElement {
       <button ?raised=${this.raised}>
         ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : ""}
         <slot></slot>
-        <md-ripple></md-ripple>
+        <ha-ripple></ha-ripple>
       </button>
     `;
   }

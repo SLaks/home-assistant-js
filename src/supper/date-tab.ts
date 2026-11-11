@@ -163,7 +163,7 @@ class DateTabElement extends LitElement {
         </b>
         ${this.dateInfo.name}
       </div>
-      <md-ripple></md-ripple>
+      <ha-ripple></ha-ripple>
     </div>`;
   }
 }

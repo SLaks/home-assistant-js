@@ -60,7 +60,9 @@ class TodoThumbnailCard extends LitElement {
       color: var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87));
       border-radius: 16px;
       padding: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.12),
+        0 1px 2px rgba(0, 0, 0, 0.24);
       overflow: hidden;
       transition: border-color 0.2s ease-out;
 
@@ -131,7 +133,7 @@ class TodoThumbnailCard extends LitElement {
           .item=${this.item}
         ></popup-todo-icon>
         <div class="Name">${this.item?.summary}</div>
-        <md-ripple></md-ripple>
+        <ha-ripple></ha-ripple>
       </div>
       ${icon
         ? html`<ha-icon class=${statusClasses} icon=${icon}></ha-icon>`
